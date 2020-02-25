@@ -21,6 +21,20 @@ public class ChatServer {
         }
     }
 
+    public void runServer(){
+        Socket client;
+        try {
+            while (true) {
+                client = ss.accept();
+                System.out.println("Received connect from " + client.getInetAddress().getHostName() + " [ "
+                        + client.getInetAddress().getHostAddress() + " ] ");
+                new ServerConnection(client).start();
+            }
+        } catch (IOException e) {
+            System.err.println(e);
+        }
+    }
+
     public static void main(String args[]){
         if(args.length != 2){
             System.out.println("Usage: java ChatServer #port #debug_level");
@@ -32,7 +46,7 @@ public class ChatServer {
         int debug_level = Integer.parseInt(args[1]);
         //Create chat server socket
         ChatServer cs = new ChatServer(port, debug_level);
-
+        cs.runServer();
 
     }
 }
