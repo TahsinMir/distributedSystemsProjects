@@ -5,23 +5,28 @@ import java.util.List;
 public class IRCMessage extends Object implements Serializable
 {
 	boolean isCommand;	//if it is not a command, it is a string message
-	boolean isServerResponse;	//if it is a server response, will be handled differently
+	boolean isClientRequest;	//it is a client request
+	boolean isServerResponse;	//it is a server response
 	
 	// all the IRC part
+	String commandType;
 	String serverName;
 	String nickName;
 	Hashtable<String, Integer> channelList;
-	String joiningChannel;
-	String leavingChannel;
-	boolean quit;
-	boolean help;
-	boolean stats;
+	String channelName;
+	String leaveChannelType;
 	
 	//otherwise just a plain message
 	String message;
 	
+	//no message could be created
+	boolean error;
+	String errorMessage;
+	
 	public IRCMessage()
 	{
+		error = false;
+		isCommand = true;
 		channelList = new Hashtable<String, Integer>();
 	}
 }
