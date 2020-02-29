@@ -3,9 +3,9 @@ import java.util.List;
 
 public class Channel
 {
-	private String channelName;
-	private List<User> users;
-	private List<Message> messages;
+	public String channelName;
+	public List<User> users;
+	public List<Message> messages;
 	
 	public Channel(String channelName)
 	{
@@ -18,9 +18,17 @@ public class Channel
 
 class User
 {
-    public String NickName; 
+    public String NickName;
+    public User(String NickName)
+    {
+    	this.NickName = NickName;
+    }
 };
 class Message
 {
 	public String message;
+	public Message(String message)
+    {
+    	this.message = message;
+    }
 }

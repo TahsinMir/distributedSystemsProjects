@@ -1,3 +1,10 @@
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -6,6 +13,12 @@ import java.util.logging.Logger;
 public class ChatClient
 {
 	private final static Logger LOGGER =  Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+	
+	private Socket server;
+	private int port;
+	private String host;
+	private InputStream in;
+	private OutputStream out;
 	
 	public static void main(String args[])
 	{
@@ -21,14 +34,68 @@ public class ChatClient
     }
 	public void ExecuteClient()
 	{
+	
+		port = 5005;
+		host = "localhost";
+		try
+		{
+			server = new Socket(this.host, this.port);
+			System.out.println("Connected to server!");
+		}
+		catch (UnknownHostException e)
+		{
+			System.out.println("Unknown Host Exception: " + e);
+		}
+		catch (IOException e)
+		{
+			System.out.println("IO Exception: " + e);
+		}
+		
+		
+		System.out.println("Client connected to server!");
 		Scanner scan = new Scanner(System.in);
+		
+		System.out.println("starting reading commands");
         
         while(true)
         {
         	String line = scan.nextLine();
         	IRCMessage command = PrepareRequest(line);
         	
-        	PrintIRCCommand(command);
+        	if(command.error == true)
+        	{
+        		System.out.println("Invalid command");
+        		continue;
+        	}
+        	
+        	try
+        	{
+        		in = server.getInputStream();
+    			out = server.getOutputStream();
+    			
+    			//By design client goes first, then goes the server, and then the outputs are compared
+    			ObjectOutputStream oout = new ObjectOutputStream(out);
+    			oout.writeObject(command);
+    			oout.flush();
+    			
+    			//sleep(1000);
+    			
+    			ObjectInputStream oin = new ObjectInputStream(in);
+    			IRCMessage res = (IRCMessage) oin.readObject();
+
+    			
+            	System.out.println("server responded with:");
+            	PrintIRCCommand(res);
+        	}
+        	catch (IOException e)
+    		{
+    			System.out.println("IO Exception occured: " + e);
+    			System.out.println("Game Over!");
+    		}
+    		catch (ClassNotFoundException e)
+    		{
+    			System.out.println("Class Not Found Exception occured: " + e);
+    		}
         }
 	}
 	private IRCMessage PrepareRequest(String command)
@@ -193,6 +260,7 @@ public class ChatClient
     		message.isCommand = false;
     		message.commandType = Constants.textMessage;
     		message.isClientRequest = true;
+    		message.message = command;
     	}
     	
     	return message;

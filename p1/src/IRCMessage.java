@@ -23,6 +23,8 @@ public class IRCMessage extends Object implements Serializable
 	boolean error;
 	String errorMessage;
 	
+	String responseMessage;
+	
 	public IRCMessage()
 	{
 		error = false;

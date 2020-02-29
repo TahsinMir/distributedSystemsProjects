@@ -7,36 +7,44 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.InetAddress;
 
-public class ChatServer {
-    ServerSocket ss;
+public class ChatServer
+{
+    ServerSocket serverSocket;
     int debug_level;
 
-    public ChatServer(int port, int debug_level) {
-        try {
-            ss = new ServerSocket(port);
+    public ChatServer(int port, int debug_level)
+    {
+        try
+        {
+            serverSocket = new ServerSocket(port);
             System.out.println("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
             this.debug_level = debug_level;
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             System.err.println(e);
         }
     }
 
-    public void runServer(){
+    public void runServer()
+    {
         Socket client;
-        try {
-            while (true) {
-                client = ss.accept();
-                System.out.println("Received connect from " + client.getInetAddress().getHostName() + " [ "
-                        + client.getInetAddress().getHostAddress() + " ] ");
-                new ServerConnection(client).start();
-            }
-        } catch (IOException e) {
+        try
+        {
+        	client = serverSocket.accept();
+            System.out.println("Received connect from " + client.getInetAddress().getHostName() + " [ " + client.getInetAddress().getHostAddress() + " ] ");
+            new ServerConnection(client).start();
+        }
+        catch (IOException e)
+        {
             System.err.println(e);
         }
     }
 
-    public static void main(String args[]){
-        if(args.length != 2){
+    public static void main(String args[])
+    {
+        if(args.length != 2)
+        {
             System.out.println("Usage: java ChatServer #port #debug_level");
             System.exit(0);
         }
@@ -47,6 +55,5 @@ public class ChatServer {
         //Create chat server socket
         ChatServer cs = new ChatServer(port, debug_level);
         cs.runServer();
-
     }
 }
