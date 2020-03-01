@@ -12,6 +12,11 @@ public class IRCMessage extends Object implements Serializable
 	boolean quit;
 	boolean help;
 	boolean stats;
+
+	//
+	boolean isCommand = True;
+	command = "quit";
+	String message = ""
 	
 	public IRCMessage()
 	{

@@ -6,10 +6,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.InetAddress;
+import java.util.HashSet;
+
 
 public class ChatServer {
     ServerSocket ss;
     int debug_level;
+    HashSet<String> availableChannel = new HashSet<>();
+
 
     public ChatServer(int port, int debug_level) {
         try {

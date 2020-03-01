@@ -20,6 +20,9 @@ public class ServerConnection extends  Thread {
 
     public void run(){
         try {
+            // Variables to read and write object.
+            // These variables will be used to communicate with server.
+
             OutputStream out = client.getOutputStream();
             InputStream in = client.getInputStream();
             ObjectOutputStream oout = new ObjectOutputStream(out);
