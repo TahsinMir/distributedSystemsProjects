@@ -13,7 +13,7 @@ public class ChatServer
 {
     ServerSocket serverSocket;
     int debug_level;
-    HashSet<String> availableChannel = new HashSet<>();
+    ServerDatabase database;
 
 
     public ChatServer(int port, int debug_level)
@@ -23,6 +23,8 @@ public class ChatServer
             serverSocket = new ServerSocket(port);
             System.out.println("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
             this.debug_level = debug_level;
+            
+            database = new ServerDatabase();
         }
         catch (IOException e)
         {

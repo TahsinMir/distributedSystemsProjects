@@ -10,19 +10,23 @@ import java.io.ObjectInput;
 public class ServerConnection extends  Thread {
 
     private Socket client;
-    private Channel facebook;
+    private String clientName;
     private InputStream in;
 	private OutputStream out;
+	private ServerDatabase database;
 
-    ServerConnection(Socket client) throws SocketException
+    ServerConnection(Socket client, ServerDatabase databsase) throws SocketException
     {
         this.client = client;
         setPriority(NORM_PRIORITY - 1);
+        this.clientName = null;
         System.out.println("Created thread " + this.getName());
         
-        facebook = new Channel("facebook");
+        long threadId = Thread.currentThread().getId();
+        database.AddThread(threadId);
+        database.AddChannel("facebook");
+        System.out.println("Client connected to server!");
         
-        System.out.println("created channel");
     }
     public void run()
     {
@@ -55,6 +59,34 @@ public class ServerConnection extends  Thread {
     	{
     		System.out.println("ClassNotFoundException occured");
 		}
+    }
+    private void AnalyzeRequestCommand(IRCMessage command)
+    {
+    	if(command.isCommand)
+    	{
+    		String commandType = command.commandType;
+    		if(commandType.contentEquals(Constants.nick))
+    		{
+    			this.clientName = command.nickName;
+    		}
+    		else if(commandType.equals(Constants.join))
+    		{
+    			String channelToJoin = command.serverName;
+    			
+    			database.AddUser(this.clientName, channelToJoin);
+    			database.AddUserToChannel(channelToJoin);
+    		}
+    	}
+    	else
+    	{
+    		for (Thread t : Thread.getAllStackTraces().keySet())
+    		{
+    			if (database.DoesThreadIdExist(t.getId()))
+    			{
+    				
+    			}
+    		}
+    	}
     }
     private IRCMessage PrepareResponse(IRCMessage command)
     {
