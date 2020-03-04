@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectInput;
+import java.net.InetAddress;
 
 public class ServerConnection extends  Thread {
 
@@ -15,25 +16,20 @@ public class ServerConnection extends  Thread {
 	private OutputStream out;
 	private ServerDatabase database;
 
-    ServerConnection(Socket client, ServerDatabase databsase) throws SocketException
-    {
+    ServerConnection(Socket client, ServerDatabase database) {
         this.client = client;
         setPriority(NORM_PRIORITY - 1);
-        this.clientName = null;
-        System.out.println("Created thread " + this.getName());
-        
-        long threadId = Thread.currentThread().getId();
-        database.AddThread(threadId);
-        database.AddChannel("facebook");
-        System.out.println("Client connected to server!");
-        
+        this.database = database;
+        //By default client port number will be his nickname. Which will be updated once client update his role
+        this.clientName = Integer.toString(client.getPort());
+        // Add user to the null channel by default
+        // Hash table cannot contains null value so we are basically putting the null as a string
+        database.AddUserToChannel(this.clientName, "null");
     }
-    public void run()
-    {
-    	try
-    	{
-    		while(true)
-        	{
+
+    public void run(){
+    	try{
+    		while(true){
         		in = client.getInputStream();
     			out = client.getOutputStream();
     			
@@ -51,62 +47,71 @@ public class ServerConnection extends  Thread {
     			oout.flush();
         	}
     	}
-    	catch(IOException e)
-    	{
+    	catch(IOException e){
     		System.out.println("IOException occured");
     	}
-    	catch (ClassNotFoundException e)
-    	{
+    	catch (ClassNotFoundException e){
     		System.out.println("ClassNotFoundException occured");
 		}
     }
-    private void AnalyzeRequestCommand(IRCMessage command)
-    {
-    	if(command.isCommand)
-    	{
-    		String commandType = command.commandType;
-    		if(commandType.contentEquals(Constants.nick))
-    		{
-    			this.clientName = command.nickName;
-    		}
-    		else if(commandType.equals(Constants.join))
-    		{
-    			String channelToJoin = command.serverName;
-    			
-    			database.AddUser(this.clientName, channelToJoin);
-    			database.AddUserToChannel(channelToJoin);
-    		}
-    	}
-    	else
-    	{
-    		for (Thread t : Thread.getAllStackTraces().keySet())
-    		{
-    			if (database.DoesThreadIdExist(t.getId()))
-    			{
-    				
-    			}
-    		}
-    	}
+
+    private IRCMessage PrepareResponse(IRCMessage ClientRequest){
+    	//Just modify the client's sent request
+		ClientRequest.isServerResponse = true;
+		ClientRequest.isClientRequest = false;
+		ClientRequest.error = false;
+
+		//Execute the command
+		if(ClientRequest.isCommand)
+		{
+			String commandType = ClientRequest.commandType;
+			if(commandType.contentEquals(Constants.nick))
+			{
+
+				// Change this name in the hashmap as well
+                if(ChangeNickNameInHashMap(ClientRequest.nickName, this.clientName)){
+                    this.clientName = ClientRequest.nickName;
+                    ClientRequest.responseMessage = "Your nick name has been changed to: " + ClientRequest.nickName;
+                }else{
+                    ClientRequest.responseMessage = "Nickname: " + ClientRequest.nickName +" already taken";
+                }
+			}else if(commandType.equals(Constants.join)){
+				if(database.AddUserToChannel(this.clientName, ClientRequest.channelName)){
+				    //
+                    ClientRequest.responseMessage = "You are added to the channel " + ClientRequest.channelName;
+                    ClientRequest.channelPort = database.getChannelPort(ClientRequest.channelName);
+                } else{
+                    ClientRequest.responseMessage = "Channel " + ClientRequest.channelName + "Doesn't exists";
+                }
+			}else if(commandType.equals(Constants.list)){
+				ClientRequest.channelList = database.getChannelWithUserNumber();
+                ClientRequest.responseMessage = "ChannelList list has been populated";
+			}else if(commandType.equals(Constants.leave)){
+			    String currChannel = database.getUsers().get(this.clientName);
+			    if(currChannel.equals("null")){
+                    ClientRequest.responseMessage = "You are not connected to any channel yet.";
+                }else{
+                    if(database.AddUserToChannel(this.clientName, "null")){
+                        ClientRequest.responseMessage = "You left the channel " + currChannel;
+                        ClientRequest.channelPort = 0;
+                    }
+                }
+            }
+		}
+    	return ClientRequest;
     }
-    private IRCMessage PrepareResponse(IRCMessage command)
-    {
-    	IRCMessage response = new IRCMessage();
-    	
-    	response.isServerResponse = true;
-    	response.isClientRequest = false;
-    	response.isCommand = false;
-    	response.error = false;
-    	
-    	if(command.commandType == Constants.join || command.commandType.equals(Constants.join))
-    	{
-    		facebook.users.add(new User(command.nickName));
-    		System.out.println("sample on storing a user into a new channel");
-    	}
-    	
-    	response.responseMessage = "order executed";
-    	
-    	return response;
+
+    private boolean ChangeNickNameInHashMap(String currentNickName, String oldNickName){
+        if(!database.getUsers().containsKey(currentNickName) && database.getUsers().containsKey(oldNickName)){
+            // this nick name is available
+            String currChannel = database.getUsers().get(oldNickName);
+            database.removeUser(oldNickName);
+            database.AddUserToChannel(currentNickName, currChannel);
+            return true;
+        }
+        return false;
     }
+
     private void PrintIRCCommand(IRCMessage message)
     {
         System.out.println("message.isCommand: " + message.isCommand);

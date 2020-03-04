@@ -2,13 +2,13 @@
 public class Constants
 {
 	public static String connect = "/connect";
-	public static String nick = "/nick";
-	public static String list = "/list";
-	public static String join = "/join";
-	public static String leave = "/leave";
+	public static String nick = "/nick"; //Done
+	public static String list = "/list"; //Done
+	public static String join = "/join"; //Done
+	public static String leave = "/leave"; // Done
 	public static String quit = "/quit";
-	public static String help = "/help";
-	public static String stats = "/stats";
+	public static String help = "/help"; // Will show all the available command
+	public static String stats = "/stats"; // Will show all the channel and number of user connected to that channel.
 
 	public static String currentChannel = "Current Channel";
 	public static String namedChannel = "Named Channel";

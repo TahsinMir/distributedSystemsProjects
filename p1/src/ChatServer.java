@@ -14,17 +14,22 @@ public class ChatServer
     ServerSocket serverSocket;
     int debug_level;
     ServerDatabase database;
+    String[] defaultChannel = {"Python", "Java", "C/C++", "PHP", "JavaScript"};
 
 
     public ChatServer(int port, int debug_level)
     {
         try
         {
+            //Initial channel created by the server;
+            database = new ServerDatabase();
+            for(int i = 0; i < defaultChannel.length; i++){
+                database.CreateChannel(defaultChannel[i]);
+            }
+            System.out.println(database.getChannelWithUserNumber());
             serverSocket = new ServerSocket(port);
             System.out.println("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
             this.debug_level = debug_level;
-            
-            database = new ServerDatabase();
         }
         catch (IOException e)
         {
@@ -39,7 +44,7 @@ public class ChatServer
         {
         	client = serverSocket.accept();
             System.out.println("Received connect from " + client.getInetAddress().getHostName() + " [ " + client.getInetAddress().getHostAddress() + " ] ");
-            new ServerConnection(client).start();
+            new ServerConnection(client, database).start();
         }
         catch (IOException e)
         {
@@ -62,4 +67,6 @@ public class ChatServer
         ChatServer cs = new ChatServer(port, debug_level);
         cs.runServer();
     }
+
+
 }

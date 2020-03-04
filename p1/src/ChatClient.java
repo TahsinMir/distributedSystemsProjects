@@ -19,6 +19,7 @@ public class ChatClient
 	private String host;
 	private InputStream in;
 	private OutputStream out;
+	private int channelPort = 0;
 	
 	public static void main(String args[])
 	{
@@ -32,26 +33,23 @@ public class ChatClient
         client.ExecuteClient();
 
     }
-	public void ExecuteClient()
-	{
-	
+	public void ExecuteClient(){
+		//TODO: This connection will be moved in the while loop
+		//User will connect to the server using /connect [servername] [portnumber]
+		//Before connecting to the server user cannot perform any other operation without the /help command
+		//TODO: quit will disconnect user from the server. And exit the chat.
 		port = 5005;
 		host = "localhost";
-		try
-		{
+		try{
 			server = new Socket(this.host, this.port);
 			System.out.println("Connected to server!");
 		}
-		catch (UnknownHostException e)
-		{
+		catch (UnknownHostException e){
 			System.out.println("Unknown Host Exception: " + e);
 		}
-		catch (IOException e)
-		{
+		catch (IOException e){
 			System.out.println("IO Exception: " + e);
 		}
-		
-		
 		System.out.println("Client connected to server!");
 		Scanner scan = new Scanner(System.in);
 		
@@ -83,9 +81,12 @@ public class ChatClient
     			ObjectInputStream oin = new ObjectInputStream(in);
     			IRCMessage res = (IRCMessage) oin.readObject();
 
-    			
-            	System.out.println("server responded with:");
-            	PrintIRCCommand(res);
+				if(res.isServerResponse){
+					//need to provide client feedback about server response
+					ShowServerResponse(res);
+				}
+//            	System.out.println("server responded with:");
+//            	PrintIRCCommand(res);
         	}
         	catch (IOException e)
     		{
@@ -98,6 +99,22 @@ public class ChatClient
     		}
         }
 	}
+
+	private void ShowServerResponse(IRCMessage ServerResponse){
+		if(ServerResponse.commandType.equals(Constants.list)){
+			//ServerResponse.channelList show this
+			System.out.println("Available channels are: ");
+			for(String key: ServerResponse.channelList.keySet()){
+				System.out.println(key);
+			}
+		}else if(ServerResponse.commandType.equals(Constants.join) || ServerResponse.commandType.equals(Constants.leave)){
+			this.channelPort = ServerResponse.channelPort;
+		}else{ // We can just show server response here. // More if will be added later if necessary
+			System.out.println(ServerResponse.responseMessage);
+		}
+	}
+
+
 	private IRCMessage PrepareRequest(String command)
 	{
 		IRCMessage message = new IRCMessage();

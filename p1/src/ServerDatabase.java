@@ -1,25 +1,26 @@
+import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.List;
+import java.net.ServerSocket;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.Set;
 
-public class ServerDatabase
-{
-	private	Hashtable<String, String> Users;
+public class ServerDatabase {
+	private	Hashtable<String, String> Users;  // username, channel name
+	private Hashtable<String, Integer> Channels; // string -> channel name, Integer->port
+
+	private final static Logger LOGGER =  Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
-	private Hashtable<String, Integer> Channels;
-	
-	private Hashtable<Long, Boolean> threadIdList;
-	
-	public ServerDatabase()
-	{
-		Users = new Hashtable<String, String>(); // username, channel name
-		Channels = new Hashtable<String, Integer>(); // Channel name, number of user in that channel
-		threadIdList = new Hashtable<Long, Boolean>(); // No work so far
+	public ServerDatabase(){
+		Users = new Hashtable<>();
+		Channels = new Hashtable<>();
 	}
 
 	public boolean AddUserToChannel(String userName, String channelName){
-		if(Channels.containsKey(channelName)) {
-			int val = Channels.get(channelName);
-			Channels.replace(channelName, val + 1);
+		//Hash table cannot contains null value so we are basically putting the null as a string
+		System.out.println("Channel name is :"+ channelName);
+		if(channelName == "null" || Channels.containsKey(channelName)) {
 			Users.put(userName, channelName);
 			return true;
 		}
@@ -28,34 +29,64 @@ public class ServerDatabase
 	public boolean CreateChannel(String channelName)
 	{
 		if(!Channels.containsKey(channelName)){
-			Channels.put(channelName, 0);
-			return true; // new channel created
+			int FreePort = GetFreePort();
+			if(FreePort > 0){ // If we successfully get a free port.
+				Channels.put(channelName, FreePort);
+				return true; // new channel created
+			}
 		}
+		LOGGER.log(Level.SEVERE, "Error in channel creation.");
 		return false; // Channel already exists
 	}
-	public void AddThread(long threadId)
-	{
-		threadIdList.put(threadId, true);
+
+	private int GetFreePort(){
+		int port;
+		ServerSocket serverSocket;
+		try{
+			serverSocket = new ServerSocket(0);
+			port =  serverSocket.getLocalPort();
+		} catch (Exception IOException){
+			//Show that as debug message
+			LOGGER.log(Level.SEVERE, "Unable to find any free port");
+			return 0;
+		}
+		try{
+			serverSocket.close();
+		} catch (Exception IOException){
+			//Show that as debug message
+			LOGGER.log(Level.SEVERE, "Unable to close the open port");
+			return 0;
+		}
+		return port;
 	}
 
-	//Removed everything into the addUser
-//	public void AddUserToChannel(String channelName)
-//	{
-//		if(Channels.containsKey(channelName))
-//		{
-//			int val = Channels.get(channelName);
-//
-//			Channels.replace(channelName, val + 1);
-//		}
-//	}
-	//No work so far
-	public boolean DoesThreadIdExist(long id)
-	{
-		if(threadIdList.containsKey(id))
-		{
-			return true;
+	public Hashtable<String, Integer> getChannelWithUserNumber(){
+		//Channel list with number of user
+		Hashtable<String, Integer> channel = new Hashtable<>();
+		for(String key: Channels.keySet()){
+			channel.put(key, 0); // Initialize the channel with no user.
 		}
-		return false;
+		// Now we will iterate over the user and update the channel
+		for (String user : Users.keySet()){
+			String userChannel = Users.get(user);
+			if(userChannel.equals("null")){
+				continue;
+			}
+			int currentUser = channel.get(userChannel);
+			currentUser += 1;
+			channel.put(userChannel, currentUser);
+		}
+		return channel;
+	}
+
+	public Hashtable<String, String> getUsers(){
+		return Users;
+	}
+	public void removeUser(String userName){
+		Users.remove(userName);
+	}
+	public int getChannelPort(String channelName){
+		return Channels.get(channelName);
 	}
 
 }
