@@ -14,4 +14,5 @@ public class Constants
 	public static String namedChannel = "Named Channel";
 	
 	public static String textMessage = "Text Message";
+	public static String nullString = "null";
 }

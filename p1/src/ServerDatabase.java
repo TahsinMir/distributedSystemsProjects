@@ -20,7 +20,7 @@ public class ServerDatabase {
 	public boolean AddUserToChannel(String userName, String channelName){
 		//Hash table cannot contains null value so we are basically putting the null as a string
 		System.out.println("Channel name is :"+ channelName);
-		if(channelName == "null" || Channels.containsKey(channelName)) {
+		if(channelName == Constants.nullString || Channels.containsKey(channelName)) {
 			Users.put(userName, channelName);
 			return true;
 		}

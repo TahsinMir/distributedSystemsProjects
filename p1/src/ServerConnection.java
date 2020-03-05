@@ -22,9 +22,10 @@ public class ServerConnection extends  Thread {
         this.database = database;
         //By default client port number will be his nickname. Which will be updated once client update his role
         this.clientName = Integer.toString(client.getPort());
+        System.out.println("setting port as nick initially: " + this.clientName);
         // Add user to the null channel by default
         // Hash table cannot contains null value so we are basically putting the null as a string
-        database.AddUserToChannel(this.clientName, "null");
+        database.AddUserToChannel(this.clientName, Constants.nullString);
     }
 
     public void run(){
@@ -33,7 +34,7 @@ public class ServerConnection extends  Thread {
         		in = client.getInputStream();
     			out = client.getOutputStream();
     			
-    			//client goes first, and then goes the server, the one with the lower value wins
+    			//receive command from client first in order to execute command
     			ObjectInputStream oin = new ObjectInputStream(in);
     			IRCMessage res = (IRCMessage) oin.readObject();
     			
@@ -55,50 +56,65 @@ public class ServerConnection extends  Thread {
 		}
     }
 
-    private IRCMessage PrepareResponse(IRCMessage ClientRequest){
-    	//Just modify the client's sent request
-		ClientRequest.isServerResponse = true;
-		ClientRequest.isClientRequest = false;
-		ClientRequest.error = false;
+    private IRCMessage PrepareResponse(IRCMessage ClientRequest)
+    {
+    	IRCMessage ServerResponse = new IRCMessage();
+    	
+    	ServerResponse.isServerResponse = true;
+    	ServerResponse.isClientRequest = false;
+    	ServerResponse.error = false;
 
-		//Execute the command
+		//If we received an actual valid command from the client, Execute the command
 		if(ClientRequest.isCommand)
 		{
 			String commandType = ClientRequest.commandType;
 			if(commandType.contentEquals(Constants.nick))
 			{
-
 				// Change this name in the hashmap as well
-                if(ChangeNickNameInHashMap(ClientRequest.nickName, this.clientName)){
+                if(ChangeNickNameInHashMap(ClientRequest.nickName, this.clientName))
+                {
                     this.clientName = ClientRequest.nickName;
-                    ClientRequest.responseMessage = "Your nick name has been changed to: " + ClientRequest.nickName;
-                }else{
-                    ClientRequest.responseMessage = "Nickname: " + ClientRequest.nickName +" already taken";
+                    ServerResponse.responseMessage = "Your nick name has been changed to: " + ClientRequest.nickName;
                 }
-			}else if(commandType.equals(Constants.join)){
-				if(database.AddUserToChannel(this.clientName, ClientRequest.channelName)){
-				    //
-                    ClientRequest.responseMessage = "You are added to the channel " + ClientRequest.channelName;
-                    ClientRequest.channelPort = database.getChannelPort(ClientRequest.channelName);
-                } else{
-                    ClientRequest.responseMessage = "Channel " + ClientRequest.channelName + "Doesn't exists";
+                else
+                {
+                	ServerResponse.responseMessage = "Nickname: " + ClientRequest.nickName +" already taken";
                 }
-			}else if(commandType.equals(Constants.list)){
-				ClientRequest.channelList = database.getChannelWithUserNumber();
-                ClientRequest.responseMessage = "ChannelList list has been populated";
-			}else if(commandType.equals(Constants.leave)){
+			}
+			else if(commandType.equals(Constants.join))
+			{
+				if(database.AddUserToChannel(this.clientName, ClientRequest.channelName))
+				{
+					ServerResponse.responseMessage = "You are added to the channel " + ClientRequest.channelName;
+					ServerResponse.channelPort = database.getChannelPort(ClientRequest.channelName);
+                }
+				else
+				{
+					ServerResponse.responseMessage = "Channel " + ClientRequest.channelName + "Doesn't exist";
+                }
+			}
+			else if(commandType.equals(Constants.list))
+			{
+				ServerResponse.channelList = database.getChannelWithUserNumber();
+				ServerResponse.responseMessage = "ChannelList list has been populated";
+			}
+			else if(commandType.equals(Constants.leave))
+			{
 			    String currChannel = database.getUsers().get(this.clientName);
-			    if(currChannel.equals("null")){
-                    ClientRequest.responseMessage = "You are not connected to any channel yet.";
-                }else{
-                    if(database.AddUserToChannel(this.clientName, "null")){
-                        ClientRequest.responseMessage = "You left the channel " + currChannel;
-                        ClientRequest.channelPort = 0;
+			    if(currChannel.equals(Constants.nullString))
+			    {
+			    	ServerResponse.responseMessage = "You are not connected to any channel yet.";
+                }
+			    else
+			    {
+                    if(database.AddUserToChannel(this.clientName, Constants.nullString)){
+                    	ServerResponse.responseMessage = "You left the channel " + currChannel;
+                    	ServerResponse.channelPort = 0;
                     }
                 }
             }
 		}
-    	return ClientRequest;
+    	return ServerResponse;
     }
 
     private boolean ChangeNickNameInHashMap(String currentNickName, String oldNickName){
