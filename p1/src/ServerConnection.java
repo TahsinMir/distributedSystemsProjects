@@ -19,7 +19,7 @@ public class ServerConnection extends  Thread {
 	private OutputStream out;
 	private ServerDatabase database;
 	private boolean finished;
-	private InetAddress group;
+	private String group;
 
     ServerConnection(Socket client, ServerDatabase database) {
         this.client = client;
@@ -98,30 +98,32 @@ public class ServerConnection extends  Thread {
 			{
 				if(database.AddUserToChannel(this.clientName, ClientRequest.channelName))
 				{					
-					try {
+					//try {
 						ServerResponse.responseMessage = "You are added to the channel " + ClientRequest.channelName;
 						ServerResponse.channelPort = database.getChannelPort(ClientRequest.channelName);
 						
-						this.group = InetAddress.getByName("230.230.246.0");
+						this.group = "230.230.246.0";
 						
-						MulticastSocket newMultiCast = new MulticastSocket(ServerResponse.channelPort);
+						ServerResponse.group = this.group;
+						
+						/*MulticastSocket newMultiCast = new MulticastSocket(ServerResponse.channelPort);
 						newMultiCast.joinGroup(group);
 						
 						database.SetUserMulticastSocket(this.clientName, newMultiCast);
 						
 						Thread t = new Thread(new MultiCastThread(newMultiCast, group, ServerResponse.channelPort, this.clientName));
-						t.start();
-					}
-					catch (UnknownHostException e)
+						t.start();*/
+					//}
+					/*catch (UnknownHostException e)
 					{
 						System.out.println("UnknownHostException occured");
 						ServerResponse.responseMessage = "Error occured: " + e.getStackTrace();
-					}
-					catch (IOException e)
+					}*/
+					/*catch (IOException e)
 					{
 						System.out.println("UnknownHostException occured");
 						ServerResponse.responseMessage = "Error occured: " + e.getStackTrace();
-					}
+					}*/
                 }
 				else
 				{
@@ -157,7 +159,7 @@ public class ServerConnection extends  Thread {
 		}
 		else	//it's a regular message to be broadcasted
 		{
-			MulticastSocket s = database.GetUserMulticastSocket(this.clientName);
+			/*MulticastSocket s = database.GetUserMulticastSocket(this.clientName);
 			String message = this.clientName + ": " + ClientRequest.message;
 			byte[] buffer = message.getBytes();
 			DatagramPacket datagram = new
@@ -167,10 +169,10 @@ public class ServerConnection extends  Thread {
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
             
             ServerResponse.commandType = Constants.textMessage;
-            ServerResponse.responseMessage = "This is a group message to everyone";
+            ServerResponse.responseMessage = "This is a group message to everyone:" + ClientRequest.message;
 		}
     	return ServerResponse;
     }

@@ -3,6 +3,9 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Hashtable;
@@ -20,6 +23,10 @@ public class ChatClient
 	private InputStream in;
 	private OutputStream out;
 	private int channelPort = 0;
+	private MulticastSocket newMultiCast;
+	private String name;
+	private String tempName;
+	private InetAddress group;
 	
 	public static void main(String args[])
 	{
@@ -99,14 +106,43 @@ public class ChatClient
         }
 	}
 
-	private void ShowServerResponse(IRCMessage ServerResponse){
-		if(ServerResponse.commandType.equals(Constants.list)){
+	private void ShowServerResponse(IRCMessage ServerResponse)
+	{
+		if(ServerResponse.commandType.equals(Constants.nick))
+		{
+			System.out.println(ServerResponse.responseMessage);
+			this.name = this.tempName;
+		}
+		else if(ServerResponse.commandType.equals(Constants.list)){
 			//ServerResponse.channelList show this
 			System.out.println("Available channels are: ");
 			for(String key: ServerResponse.channelList.keySet()){
 				System.out.println(key);
 			}
-		}else if(ServerResponse.commandType.equals(Constants.join) || ServerResponse.commandType.equals(Constants.leave)){
+		}
+		else if(ServerResponse.commandType.equals(Constants.join))
+		{
+			System.out.println(ServerResponse.responseMessage);
+			try
+			{
+				this.group = InetAddress.getByName(ServerResponse.group);
+				this.channelPort = ServerResponse.channelPort;
+				
+				newMultiCast = new MulticastSocket(ServerResponse.channelPort);
+				newMultiCast.joinGroup(this.group);
+			}
+			catch (IOException e)
+			{
+				System.out.println("UnknownHostException occured");
+				ServerResponse.responseMessage = "Error occured: " + e.getStackTrace();
+			}
+			
+			//database.SetUserMulticastSocket(this.clientName, newMultiCast);
+			
+			Thread t = new Thread(new MultiCastThread(newMultiCast, this.group, this.channelPort, this.name));
+			t.start();
+		}
+		else if(ServerResponse.commandType.equals(Constants.leave)){
 			this.channelPort = ServerResponse.channelPort;
 			System.out.println(ServerResponse.responseMessage);
 		}
@@ -116,6 +152,17 @@ public class ChatClient
 		}
 		else{ // We can just show server response here. // More if will be added later if necessary
 			System.out.println(ServerResponse.responseMessage);
+			
+			String message = this.name + ": " + ServerResponse.message;
+			byte[] buffer = message.getBytes();
+			DatagramPacket datagram = new
+            DatagramPacket(buffer,buffer.length,this.group, this.channelPort); 
+            try {
+            	newMultiCast.send(datagram);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -164,6 +211,8 @@ public class ChatClient
     			message.commandType = Constants.nick;
     			message.isClientRequest = true;
     			message.nickName = splitted[1];
+    			
+    			tempName = splitted[1];
     		}
     		
     	}
@@ -309,4 +358,45 @@ public class ChatClient
 		System.out.println("message.error: " + message.error);
 		System.out.println("message.errorMessage: " + message.errorMessage);
 	}
+}
+
+class MultiCastThread implements Runnable 
+{ 
+    private MulticastSocket socket; 
+    private InetAddress group; 
+    private int port; 
+    private static final int MAX_LEN = 1000;
+    private String clientName;
+    
+    MultiCastThread(MulticastSocket socket,InetAddress group,int port, String clientName) 
+    { 
+        this.socket = socket; 
+        this.group = group; 
+        this.port = port; 
+        this.clientName = clientName;
+    } 
+      
+    @Override
+    public void run() 
+    { 
+        while(true) 
+        { 
+                byte[] buffer = new byte[MultiCastThread.MAX_LEN]; 
+                DatagramPacket datagram = new
+                DatagramPacket(buffer,buffer.length,group,port); 
+                String message; 
+            try
+            { 
+                socket.receive(datagram); 
+                message = new
+                String(buffer,0,datagram.getLength(),"UTF-8"); 
+                if(!message.startsWith(this.clientName)) 
+                    System.out.println(message); 
+            } 
+            catch(IOException e) 
+            { 
+                System.out.println("Socket closed!"); 
+            } 
+        } 
+    } 
 }

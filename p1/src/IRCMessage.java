@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -17,6 +18,7 @@ public class IRCMessage extends Object implements Serializable
 	String leaveChannelType;
 
 	int channelPort;
+	String group;
 	
 	//otherwise just a plain message
 	String message;
