@@ -83,10 +83,12 @@ public class ServerConnection extends  Thread {
                 {
                     this.clientName = ClientRequest.nickName;
                     ServerResponse.responseMessage = "Your nick name has been changed to: " + ClientRequest.nickName;
+                    ServerResponse.commandStatus = Constants.success;
                 }
                 else
                 {
                 	ServerResponse.responseMessage = "Nickname: " + ClientRequest.nickName +" already taken";
+                	ServerResponse.commandStatus = Constants.failure;
                 }
 			}
 			else if(commandType.equals(Constants.list))
@@ -144,19 +146,8 @@ public class ServerConnection extends  Thread {
                 }
             }
 		}
-		else	//it's a regular message to be broadcasted
+		else	//it's should be regular message to be broadcasted
 		{
-			/*MulticastSocket s = database.GetUserMulticastSocket(this.clientName);
-			String message = this.clientName + ": " + ClientRequest.message;
-			byte[] buffer = message.getBytes();
-			DatagramPacket datagram = new
-            DatagramPacket(buffer,buffer.length,this.group,database.getChannelPort(database.GetUserChannelName(this.clientName))); 
-            try {
-				s.send(datagram);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}*/
             
             if(ClientRequest.commandType.equals(Constants.textMessage))
             {

@@ -110,8 +110,15 @@ public class ChatClient
 	{
 		if(ServerResponse.commandType.equals(Constants.nick))
 		{
-			System.out.println(ServerResponse.responseMessage);
-			this.name = this.tempName;
+			if(ServerResponse.commandStatus.equals(Constants.success))
+			{
+				System.out.println(ServerResponse.responseMessage);
+				this.name = this.tempName;
+			}
+			else if(ServerResponse.commandStatus.equals(Constants.failure))
+			{
+				System.out.println(ServerResponse.responseMessage);
+			}
 		}
 		else if(ServerResponse.commandType.equals(Constants.list)){
 			//ServerResponse.channelList show this
