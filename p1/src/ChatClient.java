@@ -92,7 +92,7 @@ public class ChatClient
 					ShowServerResponse(res);
 				}
 //            	System.out.println("server responded with:");
-//            	PrintIRCCommand(res);
+//            	//PrintIRCCommand(res);
         	}
         	catch (IOException e)
     		{
@@ -123,12 +123,15 @@ public class ChatClient
 		else if(ServerResponse.commandType.equals(Constants.join))
 		{
 			System.out.println(ServerResponse.responseMessage);
+			
 			try
 			{
 				this.group = InetAddress.getByName(ServerResponse.group);
 				this.channelPort = ServerResponse.channelPort;
-				
-				newMultiCast = new MulticastSocket(ServerResponse.channelPort);
+			
+				System.out.println("Received group: " + this.group + ", " + ServerResponse.group);
+				System.out.println("Received port: " + this.channelPort);
+				newMultiCast = new MulticastSocket(this.channelPort);
 				newMultiCast.joinGroup(this.group);
 			}
 			catch (IOException e)
@@ -139,6 +142,7 @@ public class ChatClient
 			
 			//database.SetUserMulticastSocket(this.clientName, newMultiCast);
 			
+			System.out.println("starting thread for new multicast with name:  " + this.name);
 			Thread t = new Thread(new MultiCastThread(newMultiCast, this.group, this.channelPort, this.name));
 			t.start();
 		}
@@ -149,9 +153,7 @@ public class ChatClient
 		else if(ServerResponse.commandType.equals(Constants.textMessage))
 		{
 			System.out.println(ServerResponse.responseMessage);
-		}
-		else{ // We can just show server response here. // More if will be added later if necessary
-			System.out.println(ServerResponse.responseMessage);
+			
 			
 			String message = this.name + ": " + ServerResponse.message;
 			byte[] buffer = message.getBytes();
@@ -163,6 +165,9 @@ public class ChatClient
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
+		else{ // We can just show server response here. // More if will be added later if necessary
+			System.out.println(ServerResponse.responseMessage);
 		}
 	}
 
@@ -389,7 +394,8 @@ class MultiCastThread implements Runnable
             { 
                 socket.receive(datagram); 
                 message = new
-                String(buffer,0,datagram.getLength(),"UTF-8"); 
+                String(buffer,0,datagram.getLength(),"UTF-8");
+                //System.out.println("datagram message being printed");
                 if(!message.startsWith(this.clientName)) 
                     System.out.println(message); 
             } 

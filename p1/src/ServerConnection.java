@@ -46,7 +46,7 @@ public class ServerConnection extends  Thread {
     			IRCMessage res = (IRCMessage) oin.readObject();
     			
     			System.out.println("received IRC message: ");
-    			PrintIRCCommand(res);
+    			//PrintIRCCommand(res);
     			
     			IRCMessage response = PrepareResponse(res);
     			
@@ -171,8 +171,12 @@ public class ServerConnection extends  Thread {
 				e.printStackTrace();
 			}*/
             
-            ServerResponse.commandType = Constants.textMessage;
-            ServerResponse.responseMessage = "This is a group message to everyone:" + ClientRequest.message;
+            if(ClientRequest.commandType.equals(Constants.textMessage))
+            {
+            	ServerResponse.commandType = Constants.textMessage;
+                ServerResponse.responseMessage = "This is a group message to everyone:" + ClientRequest.message;
+                ServerResponse.message = ClientRequest.message;
+            }
 		}
     	return ServerResponse;
     }
