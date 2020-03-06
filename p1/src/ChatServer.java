@@ -21,6 +21,7 @@ public class ChatServer
         try {
             //Initial channel created by the server;
             database = new ServerDatabase();
+            // some example channel created for the upcoming users
             for(int i = 0; i < defaultChannel.length; i++){
                 database.CreateChannel(defaultChannel[i]);
             }

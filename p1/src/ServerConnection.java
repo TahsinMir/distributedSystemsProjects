@@ -68,6 +68,7 @@ public class ServerConnection extends  Thread {
 		if(ClientRequest.isCommand)
 		{
 			String commandType = ClientRequest.commandType;
+			ServerResponse.commandType = commandType;
 			if(commandType.contentEquals(Constants.nick))
 			{
 				// Change this name in the hashmap as well
@@ -81,6 +82,11 @@ public class ServerConnection extends  Thread {
                 	ServerResponse.responseMessage = "Nickname: " + ClientRequest.nickName +" already taken";
                 }
 			}
+			else if(commandType.equals(Constants.list))
+			{
+				ServerResponse.channelList = database.getChannelWithUserNumber();
+				ServerResponse.responseMessage = "ChannelList list has been populated";
+			}
 			else if(commandType.equals(Constants.join))
 			{
 				if(database.AddUserToChannel(this.clientName, ClientRequest.channelName))
@@ -93,21 +99,27 @@ public class ServerConnection extends  Thread {
 					ServerResponse.responseMessage = "Channel " + ClientRequest.channelName + "Doesn't exist";
                 }
 			}
-			else if(commandType.equals(Constants.list))
-			{
-				ServerResponse.channelList = database.getChannelWithUserNumber();
-				ServerResponse.responseMessage = "ChannelList list has been populated";
-			}
 			else if(commandType.equals(Constants.leave))
 			{
 			    String currChannel = database.getUsers().get(this.clientName);
-			    if(currChannel.equals(Constants.nullString))
+			    if(currChannel.equals(Constants.nullString))	//user is not in any channel at all
 			    {
 			    	ServerResponse.responseMessage = "You are not connected to any channel yet.";
                 }
-			    else
+			    else if(ClientRequest.leaveChannelType == Constants.currentChannel || ClientRequest.leaveChannelType.equals(Constants.currentChannel))	//user trying to leave the current channel, whatever that is
 			    {
-                    if(database.AddUserToChannel(this.clientName, Constants.nullString)){
+			    	if(database.AddUserToChannel(this.clientName, Constants.nullString)){
+                    	ServerResponse.responseMessage = "You left the channel " + currChannel;
+                    	ServerResponse.channelPort = 0;
+                    }
+			    }
+			    else if(ClientRequest.leaveChannelType == Constants.namedChannel|| ClientRequest.leaveChannelType.equals(Constants.namedChannel))	//user is trying to leave a channel, the name is also sent by the client
+			    {
+			    	if(!currChannel.equals(ClientRequest.channelName))
+			    	{
+			    		ServerResponse.responseMessage = "You are not in the channel " + ClientRequest.channelName;
+			    	}
+			    	else if(database.AddUserToChannel(this.clientName, Constants.nullString)){
                     	ServerResponse.responseMessage = "You left the channel " + currChannel;
                     	ServerResponse.channelPort = 0;
                     }

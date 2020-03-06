@@ -71,7 +71,6 @@ public class ChatClient
         		in = server.getInputStream();
     			out = server.getOutputStream();
     			
-    			//By design client goes first, then goes the server, and then the outputs are compared
     			ObjectOutputStream oout = new ObjectOutputStream(out);
     			oout.writeObject(command);
     			oout.flush();
@@ -109,6 +108,7 @@ public class ChatClient
 			}
 		}else if(ServerResponse.commandType.equals(Constants.join) || ServerResponse.commandType.equals(Constants.leave)){
 			this.channelPort = ServerResponse.channelPort;
+			System.out.println(ServerResponse.responseMessage);
 		}else{ // We can just show server response here. // More if will be added later if necessary
 			System.out.println(ServerResponse.responseMessage);
 		}
