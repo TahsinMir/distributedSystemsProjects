@@ -428,7 +428,8 @@ class MultiCastThread implements Runnable
             } 
             catch(IOException e) 
             { 
-                System.out.println("Socket closed!"); 
+                System.out.println("Socket closed!");
+                return;
             } 
         } 
     } 
