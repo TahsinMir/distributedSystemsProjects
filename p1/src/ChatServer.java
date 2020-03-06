@@ -52,15 +52,47 @@ public class ChatServer
 
     public static void main(String args[])
     {
-        if(args.length != 2)
+        if(args.length != 4)
         {
-            System.out.println("Usage: java ChatServer #port #debug_level");
+            System.out.println("Usage: java ChatServer -p #port -d #debug_level");
             System.exit(0);
         }
-        int port = Integer.parseInt(args[0]);
-        // Debug level 0 is normal only error are reported
-        // Debug level 1 shows all the events
-        int debug_level = Integer.parseInt(args[1]);
+        else if(!((args[0].equals(Constants.p) || args[0].equals(Constants.d)) && (args[2].equals(Constants.p) || args[2].equals(Constants.d)) && !args[0].equals(args[2])))
+        {
+        	System.out.println("Usage: java ChatServer -p #port -d #debug_level");
+            System.exit(0);
+        }
+        int port = 0;
+    	int debug_level = 0;
+        try
+        {
+        	if(args[0].equals(Constants.p))
+        	{
+        		port = Integer.parseInt(args[1]);
+        		// Debug level 0 is normal only error are reported
+                // Debug level 1 shows all the events
+                debug_level = Integer.parseInt(args[3]);
+        	}
+        	else
+        	{
+        		port = Integer.parseInt(args[3]);
+        		// Debug level 0 is normal only error are reported
+                // Debug level 1 shows all the events
+                debug_level = Integer.parseInt(args[1]);
+        	}
+        }
+        catch(NumberFormatException e)
+        { 
+        	System.out.println("NumberFormatException occured: " + e.getStackTrace());
+        	System.out.println("Usage: java ChatServer -p #port -d #debug_level");
+            System.exit(0); 
+        }
+        catch(NullPointerException e)
+        {
+        	System.out.println("NullPointerException occured: " + e.getStackTrace());
+        	System.out.println("Usage: java ChatServer -p #port -d #debug_level");
+            System.exit(0); 
+        }
         //Create chat server socket
         ChatServer cs = new ChatServer(port, debug_level);
         cs.runServer();

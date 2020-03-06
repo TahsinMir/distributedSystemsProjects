@@ -19,4 +19,8 @@ public class Constants
 	//command status
 	public static String success = "Success";
 	public static String failure = "Failure";
+	
+	//command line arguments
+	public static String p = "-p";
+	public static String d = "-d";
 }
