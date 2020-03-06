@@ -122,33 +122,53 @@ public class ChatClient
 		}
 		else if(ServerResponse.commandType.equals(Constants.join))
 		{
-			System.out.println(ServerResponse.responseMessage);
-			
-			try
+			if(ServerResponse.commandStatus.equals(Constants.success))
 			{
-				this.group = InetAddress.getByName(ServerResponse.group);
-				this.channelPort = ServerResponse.channelPort;
-			
-				System.out.println("Received group: " + this.group + ", " + ServerResponse.group);
-				System.out.println("Received port: " + this.channelPort);
-				newMultiCast = new MulticastSocket(this.channelPort);
-				newMultiCast.joinGroup(this.group);
+				System.out.println(ServerResponse.responseMessage);
+				
+				try
+				{
+					this.group = InetAddress.getByName(ServerResponse.group);
+					this.channelPort = ServerResponse.channelPort;
+				
+					System.out.println("Received group: " + this.group + ", " + ServerResponse.group);
+					System.out.println("Received port: " + this.channelPort);
+					newMultiCast = new MulticastSocket(this.channelPort);
+					newMultiCast.joinGroup(this.group);
+				}
+				catch (IOException e)
+				{
+					System.out.println("UnknownHostException occured");
+					ServerResponse.responseMessage = "Error occured: " + e.getStackTrace();
+				}
+				
+				Thread t = new Thread(new MultiCastThread(newMultiCast, this.group, this.channelPort, this.name));
+				t.start();
 			}
-			catch (IOException e)
+			else if(ServerResponse.commandStatus.equals(Constants.failure))
 			{
-				System.out.println("UnknownHostException occured");
-				ServerResponse.responseMessage = "Error occured: " + e.getStackTrace();
+				System.out.println(ServerResponse.responseMessage);
 			}
-			
-			//database.SetUserMulticastSocket(this.clientName, newMultiCast);
-			
-			System.out.println("starting thread for new multicast with name:  " + this.name);
-			Thread t = new Thread(new MultiCastThread(newMultiCast, this.group, this.channelPort, this.name));
-			t.start();
 		}
-		else if(ServerResponse.commandType.equals(Constants.leave)){
-			this.channelPort = ServerResponse.channelPort;
-			System.out.println(ServerResponse.responseMessage);
+		else if(ServerResponse.commandType.equals(Constants.leave))
+		{
+			if(ServerResponse.commandStatus.equals(Constants.success))
+			{
+				try {
+					newMultiCast.leaveGroup(this.group);
+					newMultiCast.close();
+					this.channelPort = ServerResponse.channelPort;
+					System.out.println(ServerResponse.responseMessage);
+				}
+				catch (IOException e)
+				{
+					System.out.println("IOException occured while closing connection with channel");
+				}
+			}
+			else if(ServerResponse.commandStatus.equals(Constants.failure))
+			{
+				System.out.println(ServerResponse.responseMessage);
+			}
 		}
 		else if(ServerResponse.commandType.equals(Constants.textMessage))
 		{

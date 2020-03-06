@@ -97,36 +97,18 @@ public class ServerConnection extends  Thread {
 			else if(commandType.equals(Constants.join))
 			{
 				if(database.AddUserToChannel(this.clientName, ClientRequest.channelName))
-				{					
-					//try {
-						ServerResponse.responseMessage = "You are added to the channel " + ClientRequest.channelName;
-						ServerResponse.channelPort = database.getChannelPort(ClientRequest.channelName);
-						
-						this.group = "230.230.246.0";
-						
-						ServerResponse.group = this.group;
-						
-						/*MulticastSocket newMultiCast = new MulticastSocket(ServerResponse.channelPort);
-						newMultiCast.joinGroup(group);
-						
-						database.SetUserMulticastSocket(this.clientName, newMultiCast);
-						
-						Thread t = new Thread(new MultiCastThread(newMultiCast, group, ServerResponse.channelPort, this.clientName));
-						t.start();*/
-					//}
-					/*catch (UnknownHostException e)
-					{
-						System.out.println("UnknownHostException occured");
-						ServerResponse.responseMessage = "Error occured: " + e.getStackTrace();
-					}*/
-					/*catch (IOException e)
-					{
-						System.out.println("UnknownHostException occured");
-						ServerResponse.responseMessage = "Error occured: " + e.getStackTrace();
-					}*/
+				{
+					ServerResponse.responseMessage = "You are added to the channel " + ClientRequest.channelName;
+					ServerResponse.channelPort = database.getChannelPort(ClientRequest.channelName);
+					
+					this.group = "230.230.246.0";
+					
+					ServerResponse.group = this.group;
+					ServerResponse.commandStatus = Constants.success;
                 }
 				else
 				{
+					ServerResponse.commandStatus = Constants.failure;
 					ServerResponse.responseMessage = "Channel " + ClientRequest.channelName + "Doesn't exist";
                 }
 			}
@@ -135,13 +117,16 @@ public class ServerConnection extends  Thread {
 			    String currChannel = database.getUsers().get(this.clientName);
 			    if(currChannel.equals(Constants.nullString))	//user is not in any channel at all
 			    {
-			    	ServerResponse.responseMessage = "You are not connected to any channel yet.";
+			    	ServerResponse.responseMessage = "You are not connected to any channel.";
+			    	ServerResponse.commandStatus = Constants.failure;
                 }
 			    else if(ClientRequest.leaveChannelType == Constants.currentChannel || ClientRequest.leaveChannelType.equals(Constants.currentChannel))	//user trying to leave the current channel, whatever that is
 			    {
-			    	if(database.AddUserToChannel(this.clientName, Constants.nullString)){
+			    	if(database.AddUserToChannel(this.clientName, Constants.nullString))
+			    	{
                     	ServerResponse.responseMessage = "You left the channel " + currChannel;
                     	ServerResponse.channelPort = 0;
+                    	ServerResponse.commandStatus = Constants.success;
                     }
 			    }
 			    else if(ClientRequest.leaveChannelType == Constants.namedChannel|| ClientRequest.leaveChannelType.equals(Constants.namedChannel))	//user is trying to leave a channel, the name is also sent by the client
@@ -149,10 +134,12 @@ public class ServerConnection extends  Thread {
 			    	if(!currChannel.equals(ClientRequest.channelName))
 			    	{
 			    		ServerResponse.responseMessage = "You are not in the channel " + ClientRequest.channelName;
+			    		ServerResponse.commandStatus = Constants.failure;
 			    	}
 			    	else if(database.AddUserToChannel(this.clientName, Constants.nullString)){
                     	ServerResponse.responseMessage = "You left the channel " + currChannel;
                     	ServerResponse.channelPort = 0;
+                    	ServerResponse.commandStatus = Constants.success;
                     }
                 }
             }

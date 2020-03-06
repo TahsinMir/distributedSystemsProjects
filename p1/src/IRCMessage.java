@@ -16,6 +16,7 @@ public class IRCMessage extends Object implements Serializable
 	Hashtable<String, Integer> channelList;
 	String channelName;
 	String leaveChannelType;
+	String commandStatus;
 
 	int channelPort;
 	String group;

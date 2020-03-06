@@ -15,4 +15,8 @@ public class Constants
 	
 	public static String textMessage = "Text Message";
 	public static String nullString = "null";
+	
+	//command status
+	public static String success = "Success";
+	public static String failure = "Failure";
 }
