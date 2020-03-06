@@ -145,6 +145,19 @@ public class ServerConnection extends  Thread {
                     }
                 }
             }
+			else if(commandType.equals(Constants.quit))
+			{
+				//TODO: handle quit
+			}
+			else if(commandType.equals(Constants.help))
+			{
+				ServerResponse.responseMessage = CreateHelpMessage();
+				ServerResponse.commandStatus = Constants.success;
+			}
+			else if(commandType.equals(Constants.stats))
+			{
+				//TODO: handle stats
+			}
 		}
 		else	//it's should be regular message to be broadcasted
 		{
@@ -194,5 +207,22 @@ public class ServerConnection extends  Thread {
     public boolean GetFinished()
     {
     	return finished;
+    }
+    
+    private String CreateHelpMessage()
+    {
+    	String Line1 = "Possible commands: \n";
+    	String Line2 = "/connect <server-name>    Connect to named server\n";
+    	String Line3 = "/nick <nickname>          Pick a nickname (should be unique among active users)\n";
+    	String Line4 = "/list                     List channels and number of users\n";
+    	String Line5 = "/join <channel>           Join a channel, all text typed is sent to all users on the channel\n";
+    	String Line6 = "/leave [<channel>]        Leave the current (or named) channel\n";
+    	String Line7 = "/quit                     Leave chat and disconnect from server\n";
+    	String Line8 = "/help                     Print out help message\n";
+    	String Line9 = "/stats                    Ask server for some stats\n";
+    	
+    	String result = Line1 + Line2 + Line3 + Line4 + Line5 + Line6 + Line7 + Line8 + Line9;
+    	
+    	return result;
     }
 }

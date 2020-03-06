@@ -177,6 +177,21 @@ public class ChatClient
 				System.out.println(ServerResponse.responseMessage);
 			}
 		}
+		else if(ServerResponse.commandType.equals(Constants.stats))
+		{
+			
+		}
+		else if(ServerResponse.commandType.equals(Constants.help))
+		{
+			if(ServerResponse.commandStatus.equals(Constants.success))
+			{
+				System.out.println(ServerResponse.responseMessage);
+			}
+			else if(ServerResponse.commandStatus.equals(Constants.failure))
+			{
+				System.out.println("Error Occured..");
+			}
+		}
 		else if(ServerResponse.commandType.equals(Constants.textMessage))
 		{
 			System.out.println(ServerResponse.responseMessage);
