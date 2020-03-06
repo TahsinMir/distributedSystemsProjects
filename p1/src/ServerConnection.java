@@ -1,12 +1,15 @@
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectInput;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 
 public class ServerConnection extends  Thread {
 
@@ -15,6 +18,8 @@ public class ServerConnection extends  Thread {
     private InputStream in;
 	private OutputStream out;
 	private ServerDatabase database;
+	private boolean finished;
+	private InetAddress group;
 
     ServerConnection(Socket client, ServerDatabase database) {
         this.client = client;
@@ -26,6 +31,8 @@ public class ServerConnection extends  Thread {
         // Add user to the null channel by default
         // Hash table cannot contains null value so we are basically putting the null as a string
         database.AddUserToChannel(this.clientName, Constants.nullString);
+        
+        finished = false;
     }
 
     public void run(){
@@ -90,9 +97,31 @@ public class ServerConnection extends  Thread {
 			else if(commandType.equals(Constants.join))
 			{
 				if(database.AddUserToChannel(this.clientName, ClientRequest.channelName))
-				{
-					ServerResponse.responseMessage = "You are added to the channel " + ClientRequest.channelName;
-					ServerResponse.channelPort = database.getChannelPort(ClientRequest.channelName);
+				{					
+					try {
+						ServerResponse.responseMessage = "You are added to the channel " + ClientRequest.channelName;
+						ServerResponse.channelPort = database.getChannelPort(ClientRequest.channelName);
+						
+						this.group = InetAddress.getByName("230.230.246.0");
+						
+						MulticastSocket newMultiCast = new MulticastSocket(ServerResponse.channelPort);
+						newMultiCast.joinGroup(group);
+						
+						database.SetUserMulticastSocket(this.clientName, newMultiCast);
+						
+						Thread t = new Thread(new MultiCastThread(newMultiCast, group, ServerResponse.channelPort, this.clientName));
+						t.start();
+					}
+					catch (UnknownHostException e)
+					{
+						System.out.println("UnknownHostException occured");
+						ServerResponse.responseMessage = "Error occured: " + e.getStackTrace();
+					}
+					catch (IOException e)
+					{
+						System.out.println("UnknownHostException occured");
+						ServerResponse.responseMessage = "Error occured: " + e.getStackTrace();
+					}
                 }
 				else
 				{
@@ -125,6 +154,23 @@ public class ServerConnection extends  Thread {
                     }
                 }
             }
+		}
+		else	//it's a regular message to be broadcasted
+		{
+			MulticastSocket s = database.GetUserMulticastSocket(this.clientName);
+			String message = this.clientName + ": " + ClientRequest.message;
+			byte[] buffer = message.getBytes();
+			DatagramPacket datagram = new
+            DatagramPacket(buffer,buffer.length,this.group,database.getChannelPort(database.GetUserChannelName(this.clientName))); 
+            try {
+				s.send(datagram);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+            
+            ServerResponse.commandType = Constants.textMessage;
+            ServerResponse.responseMessage = "This is a group message to everyone";
 		}
     	return ServerResponse;
     }
@@ -160,5 +206,9 @@ public class ServerConnection extends  Thread {
         //no message could be created
         System.out.println("message.error: " + message.error);
         System.out.println("message.errorMessage: " + message.errorMessage);
+    }
+    public boolean GetFinished()
+    {
+    	return finished;
     }
 }

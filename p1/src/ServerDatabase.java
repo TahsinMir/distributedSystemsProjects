@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.net.MulticastSocket;
 import java.net.ServerSocket;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -8,12 +9,14 @@ import java.util.Set;
 
 public class ServerDatabase {
 	private	Hashtable<String, String> Users;  // username, channel name
+	private Hashtable<String, Object> UsersMulticastSockets;	//hold the multicast socket objects for the users
 	private Hashtable<String, Integer> Channels; // string -> channel name, Integer->port
 
 	private final static Logger LOGGER =  Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
 	public ServerDatabase(){
 		Users = new Hashtable<>();
+		UsersMulticastSockets = new Hashtable<>();
 		Channels = new Hashtable<>();
 	}
 
@@ -87,6 +90,18 @@ public class ServerDatabase {
 	}
 	public int getChannelPort(String channelName){
 		return Channels.get(channelName);
+	}
+	public void SetUserMulticastSocket(String clientName, MulticastSocket socket)
+	{
+		UsersMulticastSockets.put(clientName, socket);
+	}
+	public MulticastSocket GetUserMulticastSocket(String clientName)
+	{
+		return (MulticastSocket)UsersMulticastSockets.get(clientName);
+	}
+	public String GetUserChannelName(String userName)
+	{
+		return Users.get(userName);
 	}
 
 }

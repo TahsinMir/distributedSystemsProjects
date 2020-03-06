@@ -109,7 +109,12 @@ public class ChatClient
 		}else if(ServerResponse.commandType.equals(Constants.join) || ServerResponse.commandType.equals(Constants.leave)){
 			this.channelPort = ServerResponse.channelPort;
 			System.out.println(ServerResponse.responseMessage);
-		}else{ // We can just show server response here. // More if will be added later if necessary
+		}
+		else if(ServerResponse.commandType.equals(Constants.textMessage))
+		{
+			System.out.println(ServerResponse.responseMessage);
+		}
+		else{ // We can just show server response here. // More if will be added later if necessary
 			System.out.println(ServerResponse.responseMessage);
 		}
 	}
