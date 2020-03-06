@@ -63,7 +63,7 @@ public class ChatClient
 		System.out.println("starting reading commands");
         
         while(true)
-        {
+        {    
         	String line = scan.nextLine();
         	IRCMessage command = PrepareRequest(line);
         	
@@ -74,7 +74,7 @@ public class ChatClient
         	}
         	
         	try
-        	{
+        	{        		
         		in = server.getInputStream();
     			out = server.getOutputStream();
     			
@@ -96,8 +96,8 @@ public class ChatClient
         	}
         	catch (IOException e)
     		{
-    			System.out.println("IO Exception occured: " + e);
-    			System.out.println("Game Over!");
+        		System.out.println("Server got disconnected");
+    			//System.out.println("IO Exception occured: " + e);
     		}
     		catch (ClassNotFoundException e)
     		{
