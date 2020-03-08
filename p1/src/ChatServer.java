@@ -93,6 +93,23 @@ public class ChatServer
         	System.out.println("Usage: java ChatServer -p #port -d #debug_level");
             System.exit(0); 
         }
+        
+        //Adding shut down hook
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                try {
+                    Thread.sleep(200);
+                    System.out.println("Shutting down ...");
+                    //some cleaning up code...
+
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    e.printStackTrace();
+                }
+            }
+        });
+        
+        
         //Create chat server socket
         ChatServer cs = new ChatServer(port, debug_level);
         cs.runServer();
