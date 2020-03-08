@@ -1,6 +1,8 @@
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
@@ -20,14 +22,17 @@ public class ServerConnection extends  Thread {
 	private ServerDatabase database;
 	private boolean finished;
 	private String group;
+	private Timer timer;
+	private boolean isTimerRunning;
 
-    ServerConnection(Socket client, ServerDatabase database) {
+    ServerConnection(Socket client, ServerDatabase database, Timer timer, boolean isTimerRunning) {
         this.client = client;
         setPriority(NORM_PRIORITY - 1);
         this.database = database;
+        this.timer = timer;
+        this.isTimerRunning = isTimerRunning;
         //By default client port number will be his nickname. Which will be updated once client update his role
         this.clientName = Integer.toString(client.getPort());
-        System.out.println("setting port as nick initially: " + this.clientName);
         // Add user to the null channel by default
         // Hash table cannot contains null value so we are basically putting the null as a string
         database.AddUserToChannel(this.clientName, Constants.nullString);
@@ -37,6 +42,10 @@ public class ServerConnection extends  Thread {
 
     public void run(){
     	try{
+    		
+    		this.timer = Constants.SetTimer(this.timer, this.isTimerRunning);
+    		this.isTimerRunning = true;
+    		
     		while(true){
         		in = client.getInputStream();
     			out = client.getOutputStream();
@@ -65,6 +74,9 @@ public class ServerConnection extends  Thread {
 
     private IRCMessage PrepareResponse(IRCMessage ClientRequest)
     {
+    	this.timer = Constants.SetTimer(this.timer, this.isTimerRunning);
+    	this.isTimerRunning = true;
+    	
     	IRCMessage ServerResponse = new IRCMessage();
     	
     	ServerResponse.isServerResponse = true;

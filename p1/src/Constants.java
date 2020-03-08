@@ -1,3 +1,5 @@
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Constants
 {
@@ -26,4 +28,28 @@ public class Constants
 	
 	//global channel address
 	public static String GlobalChannelAddress = "230.230.246.0";
+	
+	//Timer time
+	public static long timerTime = 300000;    //5 minutes
+	
+	
+	public static Timer SetTimer(Timer timer, boolean isTimerRunning)
+    {
+    	if(isTimerRunning)
+    	{
+    		timer.cancel();
+    	}
+    	
+    	isTimerRunning = true;
+    	timer = new Timer();
+        timer.schedule(new TimerTask() {
+        	  @Override
+        	  public void run() {
+        		  System.out.println("No activity from users. Sever is shutting down");
+        		  System.exit(0);
+        	  }
+        	}, timerTime);
+        
+        return timer;
+    }
 }

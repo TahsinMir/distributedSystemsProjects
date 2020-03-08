@@ -10,6 +10,8 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.HashSet;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class ChatServer
@@ -18,10 +20,15 @@ public class ChatServer
     int debug_level;
     ServerDatabase database;
     String[] defaultChannel = {"Python", "Java", "C/C++", "PHP", "JavaScript"};
+    Timer timer;
+    long interval = 5000;
+    boolean isTimerRunning;
 
 
     public ChatServer(int port, int debug_level) {
         try {
+        	
+        	this.isTimerRunning  = false;
             //Initial channel created by the server;
             database = new ServerDatabase();
             // some example channel created for the upcoming users
@@ -29,6 +36,9 @@ public class ChatServer
                 database.CreateChannel(defaultChannel[i]);
             }
             serverSocket = new ServerSocket(port);
+            
+            this.timer = Constants.SetTimer(this.timer, isTimerRunning);
+            this.isTimerRunning = true;
             System.out.println("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
             this.debug_level = debug_level;
         } catch (IOException e) {
@@ -39,12 +49,13 @@ public class ChatServer
     public void runServer()
     {
         Socket client;
+        
         try
         {
             while(true){
                 client = serverSocket.accept();
                 System.out.println("Received connect from " + client.getInetAddress().getHostName() + " [ " + client.getInetAddress().getHostAddress() + " ] ");
-                new ServerConnection(client, database).start();
+                new ServerConnection(client, database, this.timer, isTimerRunning).start();
             }
         }
         catch (IOException e)
