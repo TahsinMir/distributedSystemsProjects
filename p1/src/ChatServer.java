@@ -23,6 +23,9 @@ public class ChatServer
     Timer timer;
     long interval = 5000;
     boolean isTimerRunning;
+    //TODO:: debug level
+    //TODO:: thread limitation
+    //TODO:: connect to server and quit from server
 
 
     public ChatServer(int port, int debug_level) {
