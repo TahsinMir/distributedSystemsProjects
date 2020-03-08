@@ -23,4 +23,7 @@ public class Constants
 	//command line arguments
 	public static String p = "-p";
 	public static String d = "-d";
+	
+	//global channel address
+	public static String GlobalChannelAddress = "230.230.246.0";
 }

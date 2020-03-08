@@ -103,7 +103,7 @@ public class ServerConnection extends  Thread {
 					ServerResponse.responseMessage = "You are added to the channel " + ClientRequest.channelName;
 					ServerResponse.channelPort = database.getChannelPort(ClientRequest.channelName);
 					
-					this.group = "230.230.246.0";
+					this.group = Constants.GlobalChannelAddress;
 					
 					ServerResponse.group = this.group;
 					ServerResponse.commandStatus = Constants.success;

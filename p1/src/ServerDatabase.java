@@ -93,5 +93,18 @@ public class ServerDatabase {
 	{
 		return Users.get(userName);
 	}
+	public String[] GetChannelNames()
+	{
+		String[] result = new String[Channels.size()];
+		
+		int counter = 0;
+		for(String key: Channels.keySet())
+		{
+			result[counter] = key;
+			counter = counter + 1;
+		}
+		
+		return result;
+	}
 
 }

@@ -5,7 +5,10 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.util.HashSet;
 
 
@@ -94,13 +97,18 @@ public class ChatServer
             System.exit(0); 
         }
         
+        //Create chat server socket
+        ChatServer cs = new ChatServer(port, debug_level);
+        
+        
         //Adding shut down hook
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 try {
                     Thread.sleep(200);
                     System.out.println("Shutting down ...");
-                    //some cleaning up code...
+                    cs.SendShutDownMessage();
+                    
 
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -110,9 +118,49 @@ public class ChatServer
         });
         
         
-        //Create chat server socket
-        ChatServer cs = new ChatServer(port, debug_level);
         cs.runServer();
+    }
+    
+    private void SendShutDownMessage()
+    {
+    	String [] channelList = database.GetChannelNames();
+    	
+    	String GlobalChannelAddress = Constants.GlobalChannelAddress;
+    	for(int i=0;i<channelList.length;i++)
+    	{
+    		int portNo = database.getChannelPort(channelList[i]);
+    		
+    		try {
+				InetAddress inetAddress = InetAddress.getByName(GlobalChannelAddress);
+				
+				MulticastSocket newMultiCast = new MulticastSocket(portNo);
+				newMultiCast.joinGroup(inetAddress);
+				
+				
+				String message = "Server is shutting down";
+				byte[] buffer = message.getBytes();
+				DatagramPacket datagram = new DatagramPacket(buffer,buffer.length, inetAddress, portNo); 
+	            
+				newMultiCast.send(datagram);
+				
+				
+				newMultiCast.leaveGroup(inetAddress);
+				newMultiCast.close();
+				
+			}
+    		catch (UnknownHostException e)
+    		{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		catch (IOException e)
+    		{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+    	}
     }
 
 
