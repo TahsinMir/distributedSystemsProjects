@@ -103,7 +103,7 @@ public class ServerConnection extends  Thread {
                 	ServerResponse.commandStatus = Constants.failure;
                 }
 			}
-			else if(commandType.equals(Constants.list))
+			else if(commandType.equals(Constants.list) || commandType.equals(Constants.stats))
 			{
 				ServerResponse.channelList = database.getChannelWithUserNumber();
 				ServerResponse.responseMessage = "ChannelList list has been populated";
@@ -158,9 +158,10 @@ public class ServerConnection extends  Thread {
                 }
             }
 			else if(commandType.equals(Constants.quit)){
-				//TODO: handle quit
-			}else if(commandType.equals(Constants.stats)){
-				//TODO: handle stats
+				// Remove user from the hash table
+				database.removeUser(this.clientName);
+				ServerResponse.responseMessage = "You have been removed from the channel";
+				ServerResponse.commandStatus = Constants.success;
 			}
 		}
 		else	//it's should be regular message to be broadcasted

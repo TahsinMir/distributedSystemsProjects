@@ -12,6 +12,10 @@ import java.net.MulticastSocket;
 import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.logging.Logger;
 
 
 public class ChatServer
@@ -23,6 +27,8 @@ public class ChatServer
     Timer timer;
     long interval = 5000;
     boolean isTimerRunning;
+    // Maximum number of thread is 4
+    ExecutorService threadPool = Executors.newFixedThreadPool(4);
     //TODO:: debug level
     //TODO:: thread limitation
     //TODO:: connect to server and quit from server
@@ -58,7 +64,7 @@ public class ChatServer
             while(true){
                 client = serverSocket.accept();
                 System.out.println("Received connect from " + client.getInetAddress().getHostName() + " [ " + client.getInetAddress().getHostAddress() + " ] ");
-                new ServerConnection(client, database, this.timer, isTimerRunning).start();
+                threadPool.execute(new ServerConnection(client, database, this.timer, isTimerRunning));
             }
         }
         catch (IOException e)
@@ -122,7 +128,10 @@ public class ChatServer
                     Thread.sleep(200);
                     System.out.println("Shutting down ...");
                     cs.SendShutDownMessage();
-                    
+                    // If shutdown we will close all the thread
+                    cs.threadPool.shutdown();
+                    // Wait until all threads shut down
+                    while (!cs.threadPool.isTerminated()) {   }
 
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();

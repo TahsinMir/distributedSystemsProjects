@@ -81,7 +81,11 @@ public class ChatClient
 			}
         	// Client needs to connect with the server before executing any command
 			if(!isConnected && !command.commandType.equals(Constants.connect)){
-				System.out.println("You are not connected with any server yet.");
+				System.out.println("You are not connected with any server yet. In order to use the following command" +
+						" you need to connect with the server first.\nYou can connect with the server using the " +
+						"command : \\connect <serverName> <serverPort>");
+				//Print help message here
+				System.out.println(CreateHelpMessage());
 				continue;
 			}else if(isConnected && command.commandType.equals(Constants.connect)){
 				System.out.println("You are already connected with a server");
@@ -146,19 +150,29 @@ public class ChatClient
 		{
 			if(ServerResponse.commandStatus.equals(Constants.success))
 			{
-				System.out.println(ServerResponse.responseMessage);
 				this.name = this.tempName;
 			}
-			else if(ServerResponse.commandStatus.equals(Constants.failure))
-			{
-				System.out.println(ServerResponse.responseMessage);
-			}
+			System.out.println(ServerResponse.responseMessage);
 		}
 		else if(ServerResponse.commandType.equals(Constants.list)){
 			//ServerResponse.channelList show this
 			System.out.println("Available channels are: ");
 			for(String key: ServerResponse.channelList.keySet()){
 				System.out.println(key);
+			}
+		}else if(ServerResponse.commandType.equals(Constants.quit)){
+			//Close the multicast
+			if(newMultiCast != null && !newMultiCast.isClosed()){
+				newMultiCast.close();
+				System.out.println("You are disconnected from the channel");
+			}
+			//Close the server connection
+			try{
+				server.close();
+				System.out.println("Disconnected from the server");
+				isConnected = false;
+			}catch (IOException e){
+				System.err.println("Server connection closing error");
 			}
 		}
 		else if(ServerResponse.commandType.equals(Constants.join))
