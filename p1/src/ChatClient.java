@@ -38,9 +38,62 @@ public class ChatClient
         
         
         ChatClient client = new ChatClient();
+        
+        Runtime.getRuntime().addShutdownHook(new Thread()
+        {
+            public void run()
+            {
+                try
+                {
+                    Thread.sleep(200);
+                    System.out.println("Client " + client.name + " is Shutting down ...");
+                    client.HandleClientShutdown();
+
+                }
+                catch (InterruptedException e)
+                {
+                    Thread.currentThread().interrupt();
+                    e.printStackTrace();
+                }
+            }
+        });
+        
         client.ExecuteClient();
 
     }
+	private void HandleClientShutdown()
+	{
+		IRCMessage command = PrepareRequest(Constants.quit);
+		
+		try
+		{
+			in = server.getInputStream();
+			out = server.getOutputStream();
+			
+			ObjectOutputStream oout = new ObjectOutputStream(out);
+			oout.writeObject(command);
+			oout.flush();
+			
+			//sleep(1000);
+			
+			ObjectInputStream oin = new ObjectInputStream(in);
+			IRCMessage res = (IRCMessage) oin.readObject();
+			
+			if(res.isServerResponse){
+				//need to provide client feedback about server response
+				ShowServerResponse(res);
+			}
+			
+		}
+		catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	private String CreateHelpMessage()
 	{
 		String Line1 = "Possible commands: \n";
