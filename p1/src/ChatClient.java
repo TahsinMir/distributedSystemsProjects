@@ -227,7 +227,11 @@ public class ChatClient
 		}
 		else if(ServerResponse.commandType.equals(Constants.stats))
 		{
-			
+			System.out.println("Stats: ");
+			System.out.println("Channel name \t Number of user in this channel");
+			for(String key: ServerResponse.channelList.keySet()){
+				System.out.println(key+"\t"+ServerResponse.channelList.get(key));
+			}
 		}
 		else if(ServerResponse.commandType.equals(Constants.textMessage))
 		{
