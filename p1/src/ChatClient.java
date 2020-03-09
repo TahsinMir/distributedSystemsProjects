@@ -288,16 +288,26 @@ public class ChatClient
 		}
 		else if(ServerResponse.commandType.equals(Constants.textMessage))
 		{
-			System.out.println(ServerResponse.responseMessage);
+			//System.out.println(ServerResponse.responseMessage);
 			
 			
 			String message = this.name + ": " + ServerResponse.message;
 			byte[] buffer = message.getBytes();
 			DatagramPacket datagram = new
             DatagramPacket(buffer,buffer.length,this.group, this.channelPort); 
-            try {
-            	newMultiCast.send(datagram);
-			} catch (IOException e) {
+            try
+            {
+            	if (newMultiCast == null)
+            	{
+					System.out.println("You are not connected to any channel.");
+				}
+            	else
+				{
+					newMultiCast.send(datagram);
+				}
+			}
+            catch (IOException e)
+            {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
