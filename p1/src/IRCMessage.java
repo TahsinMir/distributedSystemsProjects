@@ -12,6 +12,7 @@ public class IRCMessage extends Object implements Serializable
 	// all the IRC part
 	String commandType;
 	String serverName;
+	int serverPort;
 	String nickName;
 	Hashtable<String, Integer> channelList;
 	String channelName;

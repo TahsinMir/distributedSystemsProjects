@@ -27,6 +27,7 @@ public class ChatClient
 	private String name;
 	private String tempName;
 	private InetAddress group;
+	private boolean isConnected = false;  //This is keep the information if the user is connected with the server
 	
 	public static void main(String args[])
 	{
@@ -45,27 +46,48 @@ public class ChatClient
 		//User will connect to the server using /connect [servername] [portnumber]
 		//Before connecting to the server user cannot perform any other operation without the /help command
 		//TODO: quit will disconnect user from the server. And exit the chat.
-		port = 5005;
-		host = "localhost";
-		try{
-			server = new Socket(this.host, this.port);
-			System.out.println("Connected to server!");
-		}
-		catch (UnknownHostException e){
-			System.out.println("Unknown Host Exception: " + e);
-		}
-		catch (IOException e){
-			System.out.println("IO Exception: " + e);
-		}
-		System.out.println("Client connected to server!");
+//		port = 5005;
+//		host = "localhost";
+//		try{
+//			server = new Socket(this.host, this.port);
+//			System.out.println("Connected to server!");
+//		}
+//		catch (UnknownHostException e){
+//			System.out.println("Unknown Host Exception: " + e);
+//		}
+//		catch (IOException e){
+//			System.out.println("IO Exception: " + e);
+//		}
+//		System.out.println("Client connected to server!");
 		Scanner scan = new Scanner(System.in);
-		
-		System.out.println("starting reading commands");
+//
+//		System.out.println("starting reading commands");
         
         while(true)
         {    
         	String line = scan.nextLine();
         	IRCMessage command = PrepareRequest(line);
+        	// Client needs to connect with the server before executing any command
+			if(!isConnected && !command.commandType.equals(Constants.connect)){
+				System.out.println("You are not connected with any server yet.");
+				continue;
+			}else if(isConnected && command.commandType.equals(Constants.connect)){
+				System.out.println("You are already connected with a server");
+				continue;
+			}else if(!isConnected && command.commandType.equals(Constants.connect)){
+				// Client wasn't connected before and trying to connect with the server.
+				// So we will make the connection here
+				try{
+					server = new Socket(command.serverName, command.serverPort);
+					System.out.println("You are connected to the server "+ command.serverName + " in port " + command.serverPort);
+					isConnected = true;
+				}catch (UnknownHostException e){
+					System.out.println("Unknown Host Exception: " + e);
+				}catch (IOException e){
+					System.out.println("IO Exception: " + e);
+				}
+				continue;
+			}
         	
         	if(command.error == true)
         	{
@@ -228,11 +250,11 @@ public class ChatClient
     	}
     	else if(splitted[0] == Constants.connect || splitted[0].equals(Constants.connect))
     	{
-    		if(splitted.length != 2)
+    		if(splitted.length != 3)
     		{
     			LOGGER.log(Level.SEVERE, "Invalid Command");
     			message.error = true;
-        		message.errorMessage = "Invalid Command";
+        		message.errorMessage = "Invalid Command\nUsage: /connect [serverName] [port]";
     		}
     		else
     		{
@@ -241,6 +263,7 @@ public class ChatClient
     			message.commandType = Constants.connect;
     			message.isClientRequest = true;
     			message.serverName = splitted[1];
+    			message.serverPort = Integer.parseInt(splitted[2]);
     		}
     	}
     	else if(splitted[0] == Constants.nick || splitted[0].equals(Constants.nick))
