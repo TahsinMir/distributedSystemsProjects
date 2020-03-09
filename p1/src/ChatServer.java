@@ -51,6 +51,7 @@ public class ChatServer
             
             this.timer = Constants.SetTimer(this.timer, isTimerRunning);
             this.isTimerRunning = true;
+            System.out.println("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
             log.info("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
 
             this.debugLevel = debugLevel;
