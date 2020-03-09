@@ -41,23 +41,24 @@ public class ChatClient
         client.ExecuteClient();
 
     }
+	private String CreateHelpMessage()
+	{
+		String Line1 = "Possible commands: \n";
+		String Line2 = "/connect <serverName> <serverPort>    Connect to named server\n";
+		String Line3 = "/nick <nickname>          Pick a nickname (should be unique among active users)\n";
+		String Line4 = "/list                     List channels and number of users\n";
+		String Line5 = "/join <channel>           Join a channel, all text typed is sent to all users on the channel\n";
+		String Line6 = "/leave [<channel>]        Leave the current (or named) channel\n";
+		String Line7 = "/quit                     Leave chat and disconnect from server\n";
+		String Line8 = "/help                     Print out help message\n";
+		String Line9 = "/stats                    Ask server for some stats\n";
+
+		String result = Line1 + Line2 + Line3 + Line4 + Line5 + Line6 + Line7 + Line8 + Line9;
+
+		return result;
+	}
 	public void ExecuteClient(){
-		//TODO: This connection will be moved in the while loop
-		//User will connect to the server using /connect [servername] [portnumber]
-		//Before connecting to the server user cannot perform any other operation without the /help command
 		//TODO: quit will disconnect user from the server. And exit the chat.
-//		port = 5005;
-//		host = "localhost";
-//		try{
-//			server = new Socket(this.host, this.port);
-//			System.out.println("Connected to server!");
-//		}
-//		catch (UnknownHostException e){
-//			System.out.println("Unknown Host Exception: " + e);
-//		}
-//		catch (IOException e){
-//			System.out.println("IO Exception: " + e);
-//		}
 //		System.out.println("Client connected to server!");
 		Scanner scan = new Scanner(System.in);
 //
@@ -67,6 +68,17 @@ public class ChatClient
         {    
         	String line = scan.nextLine();
         	IRCMessage command = PrepareRequest(line);
+        	// Client can ask for help before connecting to the server.
+			// So we will process that request at the very beginning
+			if(command.commandType.equals(Constants.help)){
+				if(!isConnected)
+					System.out.println("You are not connected with any server yet. In order to use the following command" +
+							" you need to connect with the server first.\nYou can connect with the server using the " +
+							"command : \\connect <serverName> <serverPort>");
+				//Print help message here
+				System.out.println(CreateHelpMessage());
+				continue;
+			}
         	// Client needs to connect with the server before executing any command
 			if(!isConnected && !command.commandType.equals(Constants.connect)){
 				System.out.println("You are not connected with any server yet.");
@@ -202,17 +214,6 @@ public class ChatClient
 		else if(ServerResponse.commandType.equals(Constants.stats))
 		{
 			
-		}
-		else if(ServerResponse.commandType.equals(Constants.help))
-		{
-			if(ServerResponse.commandStatus.equals(Constants.success))
-			{
-				System.out.println(ServerResponse.responseMessage);
-			}
-			else if(ServerResponse.commandStatus.equals(Constants.failure))
-			{
-				System.out.println("Error Occured..");
-			}
 		}
 		else if(ServerResponse.commandType.equals(Constants.textMessage))
 		{
