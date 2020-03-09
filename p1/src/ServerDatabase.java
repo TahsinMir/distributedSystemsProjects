@@ -1,3 +1,4 @@
+//TODO: add appropriate debug message to the right place
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.net.MulticastSocket;
@@ -11,16 +12,20 @@ public class ServerDatabase {
 	private	Hashtable<String, String> Users;  // username, channel name
 	private Hashtable<String, Integer> Channels; // string -> channel name, Integer->port
 
-	private final static Logger LOGGER =  Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+	private final static Logger log =  Logger.getLogger("Server database logger");
 	
-	public ServerDatabase(){
+	public ServerDatabase(int debugLevel){
 		Users = new Hashtable<>();
 		Channels = new Hashtable<>();
+		if(debugLevel == 1){
+			log.setLevel(Level.ALL);
+		}else{
+			log.setLevel(Level.OFF);
+		}
 	}
 
 	public boolean AddUserToChannel(String userName, String channelName){
 		//Hash table cannot contains null value so we are basically putting the null as a string
-		System.out.println("Channel name is :"+ channelName);
 		if(channelName == Constants.nullString || Channels.containsKey(channelName)) {
 			Users.put(userName, channelName);
 			return true;
@@ -36,7 +41,7 @@ public class ServerDatabase {
 				return true; // new channel created
 			}
 		}
-		LOGGER.log(Level.SEVERE, "Error in channel creation.");
+		log.log(Level.SEVERE, "Error in channel creation.");
 		return false; // Channel already exists
 	}
 
@@ -48,14 +53,14 @@ public class ServerDatabase {
 			port =  serverSocket.getLocalPort();
 		} catch (Exception IOException){
 			//Show that as debug message
-			LOGGER.log(Level.SEVERE, "Unable to find any free port");
+			log.log(Level.SEVERE, "Unable to find any free port");
 			return 0;
 		}
 		try{
 			serverSocket.close();
 		} catch (Exception IOException){
 			//Show that as debug message
-			LOGGER.log(Level.SEVERE, "Unable to close the open port");
+			log.log(Level.SEVERE, "Unable to close the open port");
 			return 0;
 		}
 		return port;

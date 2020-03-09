@@ -1,3 +1,4 @@
+//TODO: add appropriate debug message to the right place
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
@@ -14,14 +15,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 
 
 public class ChatServer
 {
     ServerSocket serverSocket;
-    int debug_level;
+    int debugLevel;
     ServerDatabase database;
     String[] defaultChannel = {"Python", "Java", "C/C++", "PHP", "JavaScript"};
     Timer timer;
@@ -29,17 +30,19 @@ public class ChatServer
     boolean isTimerRunning;
     // Maximum number of thread is 4
     ExecutorService threadPool = Executors.newFixedThreadPool(4);
-    //TODO:: debug level
-    //TODO:: thread limitation
-    //TODO:: connect to server and quit from server
+    private Logger log = Logger.getLogger(ChatServer.class.getName());
 
 
-    public ChatServer(int port, int debug_level) {
+    public ChatServer(int port, int debugLevel) {
+        if(debugLevel == 1){
+            log.setLevel(Level.ALL);
+        }else{
+            log.setLevel(Level.OFF);
+        }
         try {
-        	
         	this.isTimerRunning  = false;
             //Initial channel created by the server;
-            database = new ServerDatabase();
+            database = new ServerDatabase(debugLevel);
             // some example channel created for the upcoming users
             for(int i = 0; i < defaultChannel.length; i++){
                 database.CreateChannel(defaultChannel[i]);
@@ -48,10 +51,11 @@ public class ChatServer
             
             this.timer = Constants.SetTimer(this.timer, isTimerRunning);
             this.isTimerRunning = true;
-            System.out.println("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
-            this.debug_level = debug_level;
+            log.info("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
+
+            this.debugLevel = debugLevel;
         } catch (IOException e) {
-            System.err.println(e);
+            log.warning("Server creation problem");
         }
     }
 
@@ -63,8 +67,8 @@ public class ChatServer
         {
             while(true){
                 client = serverSocket.accept();
-                System.out.println("Received connect from " + client.getInetAddress().getHostName() + " [ " + client.getInetAddress().getHostAddress() + " ] ");
-                threadPool.execute(new ServerConnection(client, database, this.timer, isTimerRunning));
+                log.info("Received connect from " + client.getInetAddress().getHostName() + " [ " + client.getInetAddress().getHostAddress() + " ] ");
+                threadPool.execute(new ServerConnection(client, database, this.timer, isTimerRunning, debugLevel));
             }
         }
         catch (IOException e)
@@ -126,7 +130,7 @@ public class ChatServer
             public void run() {
                 try {
                     Thread.sleep(200);
-                    System.out.println("Shutting down ...");
+                    cs.log.info("Shutting down ...");
                     cs.SendShutDownMessage();
                     // If shutdown we will close all the thread
                     cs.threadPool.shutdown();
@@ -173,13 +177,11 @@ public class ChatServer
 			}
     		catch (UnknownHostException e)
     		{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+                log.warning(e.toString());
 			}
     		catch (IOException e)
     		{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+                log.warning(e.toString());
 			}
 			
 			

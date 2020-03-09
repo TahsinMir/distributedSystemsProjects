@@ -1,3 +1,4 @@
+//TODO: add appropriate debug message to the right place
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -12,6 +13,8 @@ import java.io.ObjectInput;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ServerConnection extends  Thread {
 
@@ -24,8 +27,9 @@ public class ServerConnection extends  Thread {
 	private String group;
 	private Timer timer;
 	private boolean isTimerRunning;
+	private Logger log;
 
-    ServerConnection(Socket client, ServerDatabase database, Timer timer, boolean isTimerRunning) {
+    ServerConnection(Socket client, ServerDatabase database, Timer timer, boolean isTimerRunning, int debugLevel) {
         this.client = client;
         setPriority(NORM_PRIORITY - 1);
         this.database = database;
@@ -33,6 +37,12 @@ public class ServerConnection extends  Thread {
         this.isTimerRunning = isTimerRunning;
         //By default client port number will be his nickname. Which will be updated once client update his role
         this.clientName = Integer.toString(client.getPort());
+		log = Logger.getLogger("Logger of server connection: " + this.clientName);
+		if(debugLevel == 1){
+			log.setLevel(Level.ALL);
+		}else{
+			log.setLevel(Level.OFF);
+		}
         // Add user to the null channel by default
         // Hash table cannot contains null value so we are basically putting the null as a string
         database.AddUserToChannel(this.clientName, Constants.nullString);
@@ -54,7 +64,7 @@ public class ServerConnection extends  Thread {
     			ObjectInputStream oin = new ObjectInputStream(in);
     			IRCMessage res = (IRCMessage) oin.readObject();
     			
-    			System.out.println("received IRC message: ");
+    			log.info("received IRC message: ");
     			//PrintIRCCommand(res);
     			
     			IRCMessage response = PrepareResponse(res);
@@ -65,10 +75,10 @@ public class ServerConnection extends  Thread {
         	}
     	}
     	catch(IOException e){
-    		System.out.println("IOException occured");
+    		log.warning("IOException occured");
     	}
     	catch (ClassNotFoundException e){
-    		System.out.println("ClassNotFoundException occured");
+    		log.warning("ClassNotFoundException occured");
 		}
     }
 
