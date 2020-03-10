@@ -45,6 +45,7 @@ public class Constants
 	public static Timer SetTimer(Timer timer, long pId)
     {
 		parentId = pId;
+
     	if(timer != null)
     	{
     		timer.cancel();
@@ -55,31 +56,15 @@ public class Constants
         	  @Override
         	  public void run() {
         		  System.out.println("No activity from users. Sever is shutting down");
-        		  
-        		  if(System.getProperty("os.name").startsWith("Windows"))
-        		  {
-        			  String cmd = "taskkill /F /PID " + parentId;
-            		  try
-            		  {
-    					  Runtime.getRuntime().exec(cmd);
-            		  }
-            		  catch (IOException e)
-            		  {
-    					  e.printStackTrace();
-    				  }
-        		  }
-        		  else
-        		  {
-        			  String terminal = "kill -9 " + parentId;
-        			  try
-            		  {
-    					  Runtime.getRuntime().exec(terminal);
-            		  }
-            		  catch (IOException e)
-            		  {
-    					  e.printStackTrace();
-    				  }
-        		  }
+				  String cmd = System.getProperty("os.name").startsWith("Windows") ? "taskkill /F /PID " + parentId: "kill -9 "+parentId;
+				  try
+				  {
+					  Runtime.getRuntime().exec(cmd);
+				  }
+				  catch (IOException e)
+				  {
+					  e.printStackTrace();
+				  }
         		  System.exit(0);
         	  }
         	}, timerTime);
