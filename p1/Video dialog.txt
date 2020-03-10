@@ -1,0 +1,37 @@
+For the project 1 of the course CS555 - Distributed Systems, we have decided to build the ChatServer and a sample ChatClient
+to test the server. As per requirement, we have implemented the mentioned simplified version of the IRC protocol for our chat server.
+In this project, the client can use objects called "IRCMessage" to interact with the server and chat with the other clients that are
+connected in the same channel. Now let's see a demonstration of how the project works.
+
+For our demo, we are using 3 terminals for 3 clients and one terminal for the server. So let's go straight to it
+
+first. lets build our project. lets build the server by running the command: javac ChatServer.java.
+Similarly lets bulid the client as well by running the command javac ChatClient.java
+
+now, lets run the server. To run the server, we need to define the port number and debug level like this. lets choose
+debug level as 1 so that we can see whats going on in the server through the logger messages as we run it.
+
+now lets execute our clients.
+
+at this moment the first thing a client has to do is connect to the server. if a clients tries to execute any other
+commands, it will see an error message showing the possible reason. so lets try that.
+
+so since we need to connect to the server first, lets do that. now, by default, the nick name of the user is set to
+the port no the client is connected to. but we can change it using the nick command. so lets change it for two of
+the clients but keep it to default for one client to see how it goes.
+
+for our project, the server initially creates 5 channels and waits for the clients to connects to those channels.
+lets use the list command to see what those channels are.
+
+lets make all the clients join the same channel for example java. now we can send messages back and forth. and all 
+clients will receive the messages.
+
+what if one of the clients is connected to a different channel? lets see what happens then.
+as you can see, the clietn who is connected to a different channel is not receiving the messages from the other clients
+because they are in a different channel.
+
+as you have seen we can use the leave command to leave channel, we can also use the quit command to disconnect from the
+server as well.
+
+As required by the project we have implemented shutdown hooks. so if a clients hits ctrl c this will notify the server.
+also if the server is shut down by hitting the ctcl c all the clients will receive a message for that.
