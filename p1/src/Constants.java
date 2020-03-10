@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -36,11 +37,14 @@ public class Constants
 	public static String GlobalChannelAddress = "230.230.246.0";
 	
 	//Timer time
-	public static long timerTime = 300000;    //5 minutes
+	public static long timerTime = 20000;    //5 minutes
+	
+	public static long parentId = -1;
 	
 	
-	public static Timer SetTimer(Timer timer)
+	public static Timer SetTimer(Timer timer, long pId)
     {
+		parentId = pId;
     	if(timer != null)
     	{
     		timer.cancel();
@@ -51,6 +55,13 @@ public class Constants
         	  @Override
         	  public void run() {
         		  System.out.println("No activity from users. Sever is shutting down");
+        		  String cmd = "taskkill /F /PID " + parentId;
+        		  try {
+					Runtime.getRuntime().exec(cmd);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
         		  System.exit(0);
         	  }
         	}, timerTime);

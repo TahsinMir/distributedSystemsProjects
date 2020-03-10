@@ -41,7 +41,7 @@ public class ServerConnection extends Thread {
 
     public void run() {
         try {
-            this.timer = Constants.SetTimer(this.timer);
+            this.timer = Constants.SetTimer(this.timer, ProcessHandle.current().pid());
 
             while (true) {
                 in = client.getInputStream();
@@ -72,7 +72,7 @@ public class ServerConnection extends Thread {
      * @return An IRCMessage representing the response of the server to the client.
      */
     private IRCMessage PrepareResponse(IRCMessage ClientRequest) {
-        this.timer = Constants.SetTimer(this.timer);
+        this.timer = Constants.SetTimer(this.timer, ProcessHandle.current().pid());
         IRCMessage ServerResponse = new IRCMessage();
 
         ServerResponse.isServerResponse = true;

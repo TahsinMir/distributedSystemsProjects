@@ -39,7 +39,7 @@ public class ChatServer {
 				database.CreateChannel(defaultChannel[i]);
 			}
 			serverSocket = new ServerSocket(port);
-			this.timer = Constants.SetTimer(this.timer);
+			this.timer = Constants.SetTimer(this.timer, ProcessHandle.current().pid());
 			System.out.println("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
 		} catch (IOException e) {
 			log.warning("Server creation problem");
