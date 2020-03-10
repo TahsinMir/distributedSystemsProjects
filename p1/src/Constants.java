@@ -37,7 +37,7 @@ public class Constants
 	public static String GlobalChannelAddress = "230.230.246.0";
 	
 	//Timer time
-	public static long timerTime = 20000;    //5 minutes
+	public static long timerTime = 300000;    //5 minutes
 	
 	public static long parentId = -1;
 	
