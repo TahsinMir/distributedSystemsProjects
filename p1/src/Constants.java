@@ -15,6 +15,8 @@ public class Constants
 	public static String quit = "/quit";	//the quit command
 	public static String help = "/help"; // Will show all the available command
 	public static String stats = "/stats"; // Will show all the channel and number of user connected to that channel.
+	
+	public static String slash = "/";
 
 	public static String currentChannel = "Current Channel";	//if client wants to leave the current channel
 	public static String namedChannel = "Named Channel";	//if client wants to leave the named channel

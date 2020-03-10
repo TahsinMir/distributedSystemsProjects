@@ -132,10 +132,25 @@ public class ChatClient
 		Scanner scan = new Scanner(System.in);
         
 		// the client program repeatedly reads user input/commands and sends the IRC message to the server
+		System.out.println("Start writing command/comment:");
         while(true)
         {    
         	String line = scan.nextLine();
         	IRCMessage command = PrepareRequest(line);
+        	
+        	// The command is invalid
+        	if(command.error == true)
+        	{
+        		System.out.println("Invalid command");
+        		
+        		if(!isConnected)
+					System.out.println("You are not connected with any server yet. In order to use the following command" +
+							" you need to connect with the server first.\nYou can connect with the server using the " +
+							"command : \\connect <serverName> <serverPort>");
+				//Print help message here
+				System.out.println(CreateHelpMessage());        		
+        		continue;
+        	}
         	
         	// Client can ask for help before connecting to the server.
 			// So we will process that request at the very beginning
@@ -187,12 +202,6 @@ public class ChatClient
 				continue;
 			}
         	
-			// The command is invalid
-        	if(command.error == true)
-        	{
-        		System.out.println("Invalid command");
-        		continue;
-        	}
         	
         	// if all is okay, then just send the IRC message to the server and receive the response
         	try
@@ -319,9 +328,9 @@ public class ChatClient
 		else if(ServerResponse.commandType.equals(Constants.stats))
 		{
 			System.out.println("Stats: ");
-			System.out.println("Channel name \t Number of user in this channel");
+			System.out.println("Channel name \t-->\t Number of user in this channel");
 			for(String key: ServerResponse.channelList.keySet()){
-				System.out.println(key+"\t"+ServerResponse.channelList.get(key));
+				System.out.println(key+"\t-->\t"+ServerResponse.channelList.get(key));
 			}
 		}
 		else if(ServerResponse.commandType.equals(Constants.textMessage))
@@ -518,6 +527,12 @@ public class ChatClient
     			message.commandType = Constants.stats;
     			message.isClientRequest = true;
     		}
+    	}
+    	else if(splitted[0].startsWith(Constants.slash))
+    	{
+    		LOGGER.log(Level.SEVERE, "Invalid Command");
+			message.error = true;
+    		message.errorMessage = "Invalid Command";
     	}
     	else	//it is a plain message from the client
     	{
