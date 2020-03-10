@@ -59,6 +59,6 @@ a client sends/receives a IRC message command with the server, the previous time
 Both of us(Golam and Tahsin) contributed equally for this project. Where we first brainstromed our idea about it and created 
 abstract classes together. The segments each of us did can be separated the following way:
 
-Golam: handling the client's command(/join, /connect etc), process IRC command, prepare the IRC response on server side, threadpool
-Tahsin: prepare IRC message  and process IRC response on client side, multicasting, timer, shutdownhook. 
+Golam: handling the client's command(/join, /connect etc), process IRC command, prepare the IRC response on server side, threadpool  
+Tahsin: prepare IRC message  and process IRC response on client side, multicasting, timer, shutdownhook.   
 However both of us modified each other's code as necessary as we continued the project.

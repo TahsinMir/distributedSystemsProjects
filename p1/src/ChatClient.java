@@ -193,11 +193,11 @@ public class ChatClient
 				}
 				catch (UnknownHostException e)
 				{
-					System.out.println("Unknown Host Exception: " + e);
+					System.out.println("Unknown Host Exception");
 				}
 				catch (IOException e)
 				{
-					System.out.println("IO Exception: " + e);
+					System.out.println("Couldn't connect with the server");
 				}
 				continue;
 			}
@@ -225,6 +225,7 @@ public class ChatClient
         	}
         	catch (IOException e)
     		{
+    			isConnected = false;
         		System.out.println("Server got disconnected");
     		}
     		catch (ClassNotFoundException e)
