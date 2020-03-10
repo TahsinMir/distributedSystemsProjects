@@ -111,7 +111,6 @@ public class ChatClient
 		return result;
 	}
 	public void ExecuteClient(){
-		//TODO: quit will disconnect user from the server. And exit the chat.
 //		System.out.println("Client connected to server!");
 		Scanner scan = new Scanner(System.in);
 //
@@ -148,7 +147,9 @@ public class ChatClient
 				// So we will make the connection here
 				try{
 					server = new Socket(command.serverName, command.serverPort);
+					this.name = Integer.toString(server.getLocalPort());
 					System.out.println("You are connected to the server "+ command.serverName + " in port " + command.serverPort);
+					System.out.println("Your default name is : " + this.name);
 					isConnected = true;
 				}catch (UnknownHostException e){
 					System.out.println("Unknown Host Exception: " + e);
