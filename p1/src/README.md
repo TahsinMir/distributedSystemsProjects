@@ -5,8 +5,8 @@
 
 ## Overview
 
-In this a project of a simplified chat server that can support multiple clients over the Internet. This is project is 
-based on one of the earlier popular protocol is IRC (Internet Relay Chat), which is fully described in RFC 1459. 
+In this project, we implemented a simplified chat server that can support multiple clients over the Internet. This project is 
+based on one of the earlier popular protocol called IRC (Internet Relay Chat). 
 RFCs (Request For Comments) are the official documents of Internet specifications, communications protocols, procedures, and events.
 
 ## Manifest
@@ -29,34 +29,36 @@ Run the following command to compile the project:
 Run the following command to start the ChatServer:  
  `$ java ChatServer -p [portNumber] -d [debugLevel]`  
 You can use any free port available in the machine. For example `5005`. debugLevel should take value either `0/1`.
-If it's set to `0` then server won't show any log message. But if it's set to `1` then server will show the log message.  
+If it's set to `0` then server won't show any log message. But if it's set to `1` then server will show the log messages.  
 Run the following command to run the `ChatClient`:  
 `$ java ChatClient`  
-You need to connect with the server first to run the available client command. Use `/help` command to see the available 
-client command or to see how to connect with the server.  
-Run the following command to remove the compailed file from the directory:  
+You need to connect with the server first to run the available client commands. Use `/help` command to see the available 
+client commands or to see how to connect with the server.  
+Run the following command to remove the compiled file from the directory:  
  `$ make clean`  
 
 ## Testing
 
-All the files functionality of this project were tested manually. All the corner and edge cases were also tested. 
-And there is no bug that we know of.
+All the files and functionality of this project were tested manually. All the corner and edge cases were also tested. 
+And there is no critical bug that we know of.
 
 
 ## Reflection and Self Assessment
 
-Our first approach for this project was to use TCP protocol. Things got complicated when we tried to send a message to 
-all client connected to a channel. We had an idea of solving this like keeping all the channel in a hashtable with their 
-participating client's nickname and their server socket. Then if a message arrive to a particular channel then loop through 
-the channel hashtable and send the message to all connected user using their stored socket. However we didn't implement
-this idea. As we thought using multicast would make it more easier. In our multicast implementation server will assign a
-free unique port for each channel. Whenever a client wants to joined a channel server just send the channel port number 
-where client can send/receive message. Which makes the implementation lot easier and simpler.   
-Implementing the shutdown hook as also a challenging task for us. As None of us have done this before.  
-If no client is active for 5 minutes server shutdown itself. For implementing this we used regular java timer. Everytime
-a client sent/receive a message to any of the multicast channel server gets a notification and server cancel the previous
-timer and creates a new timer.
-Both of us(Golam and Tahsin) contributed equally for this project. Where we first brainstrom our idea about it and created the 
-abstract classes together. Where Golam focued on handling the client's command(/join, /connect etc), Process the IRC message on server side, 
-threadpool and Tahsin focused on multicasting, timer, shutdownhook, process the IRC message on client side. 
-However both of us modified each other code as necessary as we continue the project.
+Our first approach for this project was to use the TCP protocol. Things got complicated when we tried to send a message to 
+all clients connected to a channel. We had an idea of solving this by keeping all the channel in a hashtable with their 
+participating client's nickname and their server socket. Then if a message arrives to a particular channel then loop through
+the channel hashtable and send the message to all connected users using their stored socket. However we did not implement
+this idea. We decided to implement our porject using multicast. In our multicast implementation, the server will assign a
+free unique port for each channel. Whenever a client wants to join a channel, the server just sends the channel port number 
+where client can send/receive message. Which makes the implementation lot easier and simpler. 
+  
+Implementing the shutdown hook was also a challenging task for us. As None of us have done this before.  
+If no client is active for 5 minutes server will shutdown itself. For implementing this, we used regular java timer. Everytime
+a client sends/receives a IRC message command with the server, the previous timer is cancelled and a new timer for 5 minutes is created.
+Both of us(Golam and Tahsin) contributed equally for this project. Where we first brainstromed our idea about it and created 
+abstract classes together. The segments each of us did can be separated the following way:
+
+Golam: handling the client's command(/join, /connect etc), process IRC command, prepare the IRC response on server side, threadpool
+Tahsin: prepare IRC message  and process IRC response on client side, multicasting, timer, shutdownhook. 
+However both of us modified each other's code as necessary as we continued the project.
