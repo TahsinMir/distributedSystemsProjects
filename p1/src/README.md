@@ -56,5 +56,7 @@ Implementing the shutdown hook as also a challenging task for us. As None of us 
 If no client is active for 5 minutes server shutdown itself. For implementing this we used regular java timer. Everytime
 a client sent/receive a message to any of the multicast channel server gets a notification and server cancel the previous
 timer and creates a new timer.
-Both of us(Golam and Tahsin) contributed equally for this project. Where we first brainstrom our idea about it and create 
-abstract classes together. 
+Both of us(Golam and Tahsin) contributed equally for this project. Where we first brainstrom our idea about it and created the 
+abstract classes together. Where Golam focued on handling the client's command(/join, /connect etc), Process the IRC message on server side, 
+threadpool and Tahsin focused on multicasting, timer, shutdownhook, process the IRC message on client side. 
+However both of us modified each other code as necessary as we continue the project.
