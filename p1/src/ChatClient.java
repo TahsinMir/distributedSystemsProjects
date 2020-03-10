@@ -8,25 +8,25 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/***
+ * Represents a chat client
+ */
 public class ChatClient
 {
 	private final static Logger LOGGER =  Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
 	
-	private Socket server;
-	private int port;
-	private String host;
+	private Socket server;	//the server socket
 	private InputStream in;
 	private OutputStream out;
-	private int channelPort = 0;
-	private MulticastSocket newMultiCast;
-	private String name;
-	private String tempName;
-	private InetAddress group;
+	private int channelPort = 0;	//stores the port for the current channel
+	private MulticastSocket newMultiCast;	//stores the multicast socket for the current channel
+	private String name;		//stores the actual nick name
+	private String tempName;	//this stores the nickname temporarily until the server acknowledges that the name is changed
+	private InetAddress group;	//This will store the group of the current channel that the user is connected in
 	private boolean isConnected = false;  //This is keep the information if the user is connected with the server
 	
 	public static void main(String args[])
@@ -39,6 +39,8 @@ public class ChatClient
         
         ChatClient client = new ChatClient();
         
+        //The client's shutdown hook. Before a client quits, it requests a "/quit" command execution
+        //so that all the data is processed properly in the server side.
         Runtime.getRuntime().addShutdownHook(new Thread()
         {
             public void run()
@@ -61,6 +63,9 @@ public class ChatClient
         client.ExecuteClient();
 
     }
+	/***
+     * Does the final functionalitities, When the client disconnect using ctrl c
+     */
 	private void HandleClientShutdown()
 	{
 		IRCMessage command = PrepareRequest(Constants.quit);
@@ -74,26 +79,29 @@ public class ChatClient
 			oout.writeObject(command);
 			oout.flush();
 			
-			//sleep(1000);
 			
 			ObjectInputStream oin = new ObjectInputStream(in);
 			IRCMessage res = (IRCMessage) oin.readObject();
 			
-			if(res.isServerResponse){
-				//need to provide client feedback about server response
+			if(res.isServerResponse)
+			{
 				ShowServerResponse(res);
 			}
 			
 		}
 		catch (IOException e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("IO Exception occured");
+		}
+		catch (ClassNotFoundException e)
+		{
+			System.out.println("Class not found exception occured");
 		}
 	}
+	/***
+     * Generates the help message
+     * @return A String representing the help message.
+     */
 	private String CreateHelpMessage()
 	{
 		String Line1 = "Possible commands: \n";
@@ -110,19 +118,24 @@ public class ChatClient
 
 		return result;
 	}
-	public void ExecuteClient(){
-//		System.out.println("Client connected to server!");
+	
+	/***
+     * Executes the client operations.
+     */
+	public void ExecuteClient()
+	{
 		Scanner scan = new Scanner(System.in);
-//
-//		System.out.println("starting reading commands");
         
+		// the client program repeatedly reads user input/commands and sends the IRC message to the server
         while(true)
         {    
         	String line = scan.nextLine();
         	IRCMessage command = PrepareRequest(line);
+        	
         	// Client can ask for help before connecting to the server.
 			// So we will process that request at the very beginning
-			if(command.commandType.equals(Constants.help)){
+			if(command.commandType.equals(Constants.help))
+			{
 				if(!isConnected)
 					System.out.println("You are not connected with any server yet. In order to use the following command" +
 							" you need to connect with the server first.\nYou can connect with the server using the " +
@@ -132,39 +145,51 @@ public class ChatClient
 				continue;
 			}
         	// Client needs to connect with the server before executing any command
-			if(!isConnected && !command.commandType.equals(Constants.connect)){
+			if(!isConnected && !command.commandType.equals(Constants.connect))
+			{
 				System.out.println("You are not connected with any server yet. In order to use the following command" +
 						" you need to connect with the server first.\nYou can connect with the server using the " +
 						"command : \\connect <serverName> <serverPort>");
 				//Print help message here
 				System.out.println(CreateHelpMessage());
 				continue;
-			}else if(isConnected && command.commandType.equals(Constants.connect)){
+			}
+			else if(isConnected && command.commandType.equals(Constants.connect))
+			{
 				System.out.println("You are already connected with a server");
 				continue;
-			}else if(!isConnected && command.commandType.equals(Constants.connect)){
+			}
+			else if(!isConnected && command.commandType.equals(Constants.connect))
+			{
 				// Client wasn't connected before and trying to connect with the server.
 				// So we will make the connection here
-				try{
+				try
+				{
 					server = new Socket(command.serverName, command.serverPort);
 					this.name = Integer.toString(server.getLocalPort());
 					System.out.println("You are connected to the server "+ command.serverName + " in port " + command.serverPort);
 					System.out.println("Your default name is : " + this.name);
 					isConnected = true;
-				}catch (UnknownHostException e){
+				}
+				catch (UnknownHostException e)
+				{
 					System.out.println("Unknown Host Exception: " + e);
-				}catch (IOException e){
+				}
+				catch (IOException e)
+				{
 					System.out.println("IO Exception: " + e);
 				}
 				continue;
 			}
         	
+			// The command is invalid
         	if(command.error == true)
         	{
         		System.out.println("Invalid command");
         		continue;
         	}
         	
+        	// if all is okay, then just send the IRC message to the server and receive the response
         	try
         	{        		
         		in = server.getInputStream();
@@ -174,22 +199,19 @@ public class ChatClient
     			oout.writeObject(command);
     			oout.flush();
     			
-    			//sleep(1000);
     			
     			ObjectInputStream oin = new ObjectInputStream(in);
     			IRCMessage res = (IRCMessage) oin.readObject();
 
-				if(res.isServerResponse){
+				if(res.isServerResponse)
+				{
 					//need to provide client feedback about server response
 					ShowServerResponse(res);
 				}
-//            	System.out.println("server responded with:");
-//            	//PrintIRCCommand(res);
         	}
         	catch (IOException e)
     		{
         		System.out.println("Server got disconnected");
-    			//System.out.println("IO Exception occured: " + e);
     		}
     		catch (ClassNotFoundException e)
     		{
@@ -198,6 +220,9 @@ public class ChatClient
         }
 	}
 
+	/***
+     * processes and show the response IRC message from the server
+     */
 	private void ShowServerResponse(IRCMessage ServerResponse)
 	{
 		if(ServerResponse.commandType.equals(Constants.nick))
@@ -208,24 +233,31 @@ public class ChatClient
 			}
 			System.out.println(ServerResponse.responseMessage);
 		}
-		else if(ServerResponse.commandType.equals(Constants.list)){
-			//ServerResponse.channelList show this
+		else if(ServerResponse.commandType.equals(Constants.list))
+		{
 			System.out.println("Available channels are: ");
-			for(String key: ServerResponse.channelList.keySet()){
+			for(String key: ServerResponse.channelList.keySet())
+			{
 				System.out.println(key);
 			}
-		}else if(ServerResponse.commandType.equals(Constants.quit)){
+		}
+		else if(ServerResponse.commandType.equals(Constants.quit))
+		{
 			//Close the multicast
-			if(newMultiCast != null && !newMultiCast.isClosed()){
+			if(newMultiCast != null && !newMultiCast.isClosed())
+			{
 				newMultiCast.close();
 				System.out.println("You are disconnected from the channel");
 			}
 			//Close the server connection
-			try{
+			try
+			{
 				server.close();
 				System.out.println("Disconnected from the server");
 				isConnected = false;
-			}catch (IOException e){
+			}
+			catch (IOException e)
+			{
 				System.err.println("Server connection closing error");
 			}
 		}
@@ -289,8 +321,6 @@ public class ChatClient
 		}
 		else if(ServerResponse.commandType.equals(Constants.textMessage))
 		{
-			//System.out.println(ServerResponse.responseMessage);
-			
 			
 			String message = this.name + ": " + ServerResponse.message;
 			byte[] buffer = message.getBytes();
@@ -309,16 +339,22 @@ public class ChatClient
 			}
             catch (IOException e)
             {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.out.println("IOException occured");
 			}
 		}
-		else{ // We can just show server response here. // More if will be added later if necessary
+		else
+		{ 
+			// We can just show server response here.
 			System.out.println(ServerResponse.responseMessage);
 		}
 	}
 
 
+	/***
+     * Takes user input as string, and prepares the IRC message request to be sent to the server
+     * @param command, A String containing the clients' command
+     * @return An IRCMessage representing the client command or request to the server.
+     */
 	private IRCMessage PrepareRequest(String command)
 	{
 		IRCMessage message = new IRCMessage();
@@ -489,30 +525,11 @@ public class ChatClient
     	
     	return message;
 	}
-	//just for testing
-	private void PrintIRCCommand(IRCMessage message)
-	{
-		System.out.println("message.isCommand: " + message.isCommand);
-		System.out.println("message.isClientRequest: " + message.isClientRequest);
-		System.out.println("message.isServerResponse: " + message.isServerResponse);
-		
-		// all the IRC part
-		System.out.println("message.commandType: " + message.commandType);
-		System.out.println("message.serverName: " + message.serverName);
-		System.out.println("message.nickName: " + message.nickName);
-		System.out.println("message.channelList:" + message.channelList);
-		System.out.println("message.channelName: " + message.channelName);
-		System.out.println("message.leaveChannelType: " + message.leaveChannelType);
-		
-		//otherwise just a plain message
-		System.out.println("message.message: " + message.message);
-		
-		//no message could be created
-		System.out.println("message.error: " + message.error);
-		System.out.println("message.errorMessage: " + message.errorMessage);
-	}
 }
 
+/***
+ * Represents a MuktiCastThread for a client
+ */
 class MultiCastThread implements Runnable 
 { 
     private MulticastSocket socket; 
@@ -532,6 +549,7 @@ class MultiCastThread implements Runnable
     @Override
     public void run() 
     { 
+    	// the clients also listens to the multicast to see if there are any messages sent by other users
         while(true) 
         { 
                 byte[] buffer = new byte[MultiCastThread.MAX_LEN]; 
@@ -543,7 +561,6 @@ class MultiCastThread implements Runnable
                 socket.receive(datagram); 
                 message = new
                 String(buffer,0,datagram.getLength(),"UTF-8");
-                //System.out.println("datagram message being printed");
                 if(!message.startsWith(this.clientName)) 
                     System.out.println(message); 
             } 
