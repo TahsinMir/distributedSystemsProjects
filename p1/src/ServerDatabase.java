@@ -17,11 +17,7 @@ public class ServerDatabase {
 	public ServerDatabase(int debugLevel){
 		Users = new Hashtable<>();
 		Channels = new Hashtable<>();
-		if(debugLevel == 1){
-			log.setLevel(Level.ALL);
-		}else{
-			log.setLevel(Level.OFF);
-		}
+		log.setLevel(debugLevel == 1 ? Level.ALL : Level.OFF);
 	}
 
 	public boolean AddUserToChannel(String userName, String channelName){
