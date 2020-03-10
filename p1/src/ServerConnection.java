@@ -66,6 +66,11 @@ public class ServerConnection extends Thread {
         }
     }
 
+    /***
+     * Takes Client IRCMessage, and prepares the IRC message response to be sent back to the client
+     * @param clientRequest, An IRCMessage
+     * @return An IRCMessage representing the response of the server to the client.
+     */
     private IRCMessage PrepareResponse(IRCMessage ClientRequest) {
         this.timer = Constants.SetTimer(this.timer);
         IRCMessage ServerResponse = new IRCMessage();
@@ -145,6 +150,10 @@ public class ServerConnection extends Thread {
         return ServerResponse;
     }
 
+    /***
+     * updates client user/nick name in the server
+     * @param current and old nick name.
+     */
     private boolean ChangeNickNameInHashMap(String currentNickName, String oldNickName) {
         if (!database.getUsers().containsKey(currentNickName) && database.getUsers().containsKey(oldNickName)) {
             // this nick name is available
@@ -155,7 +164,11 @@ public class ServerConnection extends Thread {
         }
         return false;
     }
-
+    
+    /***
+     * Pirints the IRC message received from the client. Only used for testing
+     * @param message, an IRCMessage.
+     */
     private void PrintIRCCommand(IRCMessage message) {
         System.out.println("message.isCommand: " + message.isCommand);
         System.out.println("message.isClientRequest: " + message.isClientRequest);

@@ -29,6 +29,11 @@ public class ChatClient
 	private InetAddress group;	//This will store the group of the current channel that the user is connected in
 	private boolean isConnected = false;  //This is keep the information if the user is connected with the server
 	
+	
+	/***
+     * Entry point of ChatClient program.
+     * @param args
+     */
 	public static void main(String args[])
 	{
         if(args.length != 0){

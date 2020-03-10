@@ -7,21 +7,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
+/***
+ * Represents a chat server
+ */
 public class ChatServer {
-	private final int NUMBER_OF_THREAD_FOR_THREADPOOL = 4;
+	private final int NUMBER_OF_THREAD_FOR_THREADPOOL = 4;	//limiting the number of threads using threadpool
 	// These channel will be created during the server creation process
-	String[] defaultChannel = {"Python", "Java", "C/C++", "PHP", "JavaScript"};
+	String[] defaultChannel = {"Python", "Java", "C/C++", "PHP", "JavaScript"};		//available sample channels in the server
 	ServerSocket serverSocket;
-	int debugLevel;
+	int debugLevel;	//holds the debug level
 	ServerDatabase database;
-	Timer timer;
+	Timer timer;	//used to check if there is any activity with the clients, otherwise the server will shut down in 5 minutes
 
 	ExecutorService threadPool = Executors.newFixedThreadPool(NUMBER_OF_THREAD_FOR_THREADPOOL);
 	private Logger log = Logger.getLogger(ChatServer.class.getName());
 
     /***
      * Create the server socket
-     * Star the timer for shutting down the server after 5 minutes.
+     * Start the timer for shutting down the server after 5 minutes.
      * @param port
      * @param debugLevel
      */
