@@ -85,20 +85,14 @@ public class ChatServer {
 		//Adding shut down hook
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
-				try {
-					Thread.sleep(200);
-					cs.log.info("Shutting down ...");
+				cs.log.info("Shutting down ...");
+					
 					cs.SendShutDownMessage();
 					// If shutdown we will close all the thread
-					cs.threadPool.shutdown();
+					cs.threadPool.shutdownNow();
 					// Wait until all threads shut down
-					while (!cs.threadPool.isTerminated()) {
+					while (!cs.threadPool.isShutdown()) {
 					}
-
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					e.printStackTrace();
-				}
 			}
 		});
 		cs.runServer();
