@@ -26,15 +26,13 @@ public class ServerConnection extends  Thread {
 	private boolean finished;
 	private String group;
 	private Timer timer;
-	private boolean isTimerRunning;
 	private Logger log;
 
-    ServerConnection(Socket client, ServerDatabase database, Timer timer, boolean isTimerRunning, int debugLevel) {
+    ServerConnection(Socket client, ServerDatabase database, Timer timer, int debugLevel) {
         this.client = client;
         setPriority(NORM_PRIORITY - 1);
         this.database = database;
         this.timer = timer;
-        this.isTimerRunning = isTimerRunning;
         //By default client port number will be his nickname. Which will be updated once client update his role
         this.clientName = Integer.toString(client.getPort());
 		log = Logger.getLogger("Logger of server connection: " + this.clientName);
@@ -52,10 +50,8 @@ public class ServerConnection extends  Thread {
 
     public void run(){
     	try{
-    		
-    		this.timer = Constants.SetTimer(this.timer, this.isTimerRunning);
-    		this.isTimerRunning = true;
-    		
+    		this.timer = Constants.SetTimer(this.timer);
+
     		while(true){
         		in = client.getInputStream();
     			out = client.getOutputStream();
@@ -84,9 +80,7 @@ public class ServerConnection extends  Thread {
 
     private IRCMessage PrepareResponse(IRCMessage ClientRequest)
     {
-    	this.timer = Constants.SetTimer(this.timer, this.isTimerRunning);
-    	this.isTimerRunning = true;
-    	
+    	this.timer = Constants.SetTimer(this.timer);
     	IRCMessage ServerResponse = new IRCMessage();
     	
     	ServerResponse.isServerResponse = true;

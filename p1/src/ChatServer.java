@@ -1,18 +1,12 @@
 //TODO: add appropriate debug message to the right place
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.util.HashSet;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
@@ -21,26 +15,22 @@ import java.util.logging.Level;
 
 public class ChatServer
 {
+    private final int NUMBER_OF_THREAD_FOR_THREADPOOL = 4;
+    // These channel will be created during the server creation process
+    String[] defaultChannel = {"Python", "Java", "C/C++", "PHP", "JavaScript"};
     ServerSocket serverSocket;
     int debugLevel;
     ServerDatabase database;
-    String[] defaultChannel = {"Python", "Java", "C/C++", "PHP", "JavaScript"};
     Timer timer;
-    long interval = 5000;
-    boolean isTimerRunning;
-    // Maximum number of thread is 4
-    ExecutorService threadPool = Executors.newFixedThreadPool(4);
+    //We have not started the timer yet
+
+    ExecutorService threadPool = Executors.newFixedThreadPool(NUMBER_OF_THREAD_FOR_THREADPOOL);
     private Logger log = Logger.getLogger(ChatServer.class.getName());
 
 
     public ChatServer(int port, int debugLevel) {
-        if(debugLevel == 1){
-            log.setLevel(Level.ALL);
-        }else{
-            log.setLevel(Level.OFF);
-        }
+        log.setLevel(debugLevel == 1 ? Level.ALL : Level.OFF);
         try {
-        	this.isTimerRunning  = false;
             //Initial channel created by the server;
             database = new ServerDatabase(debugLevel);
             // some example channel created for the upcoming users
@@ -49,8 +39,7 @@ public class ChatServer
             }
             serverSocket = new ServerSocket(port);
             
-            this.timer = Constants.SetTimer(this.timer, isTimerRunning);
-            this.isTimerRunning = true;
+            this.timer = Constants.SetTimer(this.timer);
             System.out.println("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
             log.info("ChatServer is up and running on port " + port + " " + InetAddress.getLocalHost());
 
@@ -69,7 +58,7 @@ public class ChatServer
             while(true){
                 client = serverSocket.accept();
                 log.info("Received connect from " + client.getInetAddress().getHostName() + " [ " + client.getInetAddress().getHostAddress() + " ] ");
-                threadPool.execute(new ServerConnection(client, database, this.timer, isTimerRunning, debugLevel));
+                threadPool.execute(new ServerConnection(client, database, this.timer, debugLevel));
             }
         }
         catch (IOException e)

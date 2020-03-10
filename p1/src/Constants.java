@@ -30,17 +30,16 @@ public class Constants
 	public static String GlobalChannelAddress = "230.230.246.0";
 	
 	//Timer time
-	public static long timerTime = 300000;    //5 minutes
+	public static long timerTime = 3000;    //5 minutes
 	
 	
-	public static Timer SetTimer(Timer timer, boolean isTimerRunning)
+	public static Timer SetTimer(Timer timer)
     {
-    	if(isTimerRunning)
+    	if(timer != null)
     	{
     		timer.cancel();
     	}
     	
-    	isTimerRunning = true;
     	timer = new Timer();
         timer.schedule(new TimerTask() {
         	  @Override
