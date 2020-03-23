@@ -1,3 +1,5 @@
+package Identity.client;
+
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
@@ -5,7 +7,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Option;
-import java.io.PrintWriter;
 
 public class IdClient {
     private String serverHost;
@@ -114,7 +115,5 @@ public class IdClient {
 
         IdClient client = new IdClient();
         client.extractOptions(options, args);
-
-
     }
 }
