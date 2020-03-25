@@ -20,16 +20,16 @@ public class Database
 			statement = connection.createStatement();
 			statement.setQueryTimeout(30);
 			
-			statement.executeUpdate("create table if not exists user (loginName string, uuid string, ipAddress string, date string, time string, realUserName string, lastChangeDate string)");
+			statement.executeUpdate("create table if not exists user (loginName string, uuid string, password string, ipAddress string, date string, time string, realUserName string, lastChangeDate string)");
 			
 		}
 		catch (SQLException e)
 		{
-			System.out.println("SQLException: " + e.getStackTrace());
+			System.out.println("SQLException during setting up database connection: " + e.getStackTrace());
 		}
 		
 	}
-	private boolean Insert(String loginName, String uuid, String ipAddress, String date, String time, String realUserName, String lastChangeDate)
+	private boolean Insert(String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate)
 	{
 		try
 		{
@@ -47,7 +47,7 @@ public class Database
 			return false;
 		}
 		
-		String query = "insert into user values('" + loginName + "', '" + uuid + "', '" + ipAddress + "', '" + date + "', '" + time + "', '" + realUserName + "', '" + lastChangeDate + "')";
+		String query = "insert into user values('" + loginName + "', '" + uuid + "', '" + password + "', '" + ipAddress + "', '" + date + "', '" + time + "', '" + realUserName + "', '" + lastChangeDate + "')";
 		
 		try
 		{
@@ -102,6 +102,7 @@ public class Database
 			
 			String loginName = result.getString(Constants.loginName);
 			String uuid = result.getString(Constants.uuid);
+			String password = result.getString(Constants.password);
 			String ipAddress = result.getString(Constants.ipAddress);
 			String date = result.getString(Constants.date);
 			String time = result.getString(Constants.time);
@@ -118,31 +119,35 @@ public class Database
 			boolean addResult = true;
 			if(changeType.equals(Constants.loginName))
 			{
-				addResult = Insert(changeValue, uuid, ipAddress, date, time, realUserName, lastChangeDate);
+				addResult = Insert(changeValue, uuid, password, ipAddress, date, time, realUserName, lastChangeDate);
 			}
 			else if(changeType.equals(Constants.uuid))
 			{
-				addResult = Insert(loginName, changeValue, ipAddress, date, time, realUserName, lastChangeDate);
+				addResult = Insert(loginName, changeValue, password, ipAddress, date, time, realUserName, lastChangeDate);
+			}
+			else if(changeType.equals(Constants.password))
+			{
+				addResult = Insert(loginName, uuid, changeValue, ipAddress, date, time, realUserName, lastChangeDate);
 			}
 			else if(changeType.equals(Constants.ipAddress))
 			{
-				addResult = Insert(loginName, uuid, changeValue, date, time, realUserName, lastChangeDate);
+				addResult = Insert(loginName, uuid, password, changeValue, date, time, realUserName, lastChangeDate);
 			}
 			else if(changeType.equals(Constants.date))
 			{
-				addResult = Insert(loginName, uuid, ipAddress, changeValue, time, realUserName, lastChangeDate);
+				addResult = Insert(loginName, uuid, password, ipAddress, changeValue, time, realUserName, lastChangeDate);
 			}
 			else if(changeType.equals(Constants.time))
 			{
-				addResult = Insert(loginName, uuid, ipAddress, date, changeValue, realUserName, lastChangeDate);
+				addResult = Insert(loginName, uuid, password, ipAddress, date, changeValue, realUserName, lastChangeDate);
 			}
 			else if(changeType.equals(Constants.realUserName))
 			{
-				addResult = Insert(loginName, uuid, ipAddress, date, time, changeValue, lastChangeDate);
+				addResult = Insert(loginName, uuid, password, ipAddress, date, time, changeValue, lastChangeDate);
 			}
 			else if(changeType.equals(Constants.lastChangeDate))
 			{
-				addResult = Insert(loginName, uuid, ipAddress, date, time, realUserName, changeValue);
+				addResult = Insert(loginName, uuid, password, ipAddress, date, time, realUserName, changeValue);
 			}
 			
 			if(!addResult)
@@ -199,6 +204,8 @@ public class Database
 					
 					System.out.print(response.getString("uuid") + ", ");
 					
+					System.out.print(response.getString("password") + ", ");
+					
 					System.out.print(response.getString("ipAddress") + ", ");
 					
 					System.out.print(response.getString("date") + ", ");
@@ -227,9 +234,9 @@ public class Database
 	{
 		Database b = new Database();
 		
-		b.Insert("Mike", "1234", "127.0.0.1", "March 25", "4 pm", "Michael", "March 25");
-		b.Insert("Tyson", "1235", "127.0.0.1", "March 25", "4 pm", "Michael", "March 25");
-		b.Insert("Ashley", "1236", "127.0.0.1", "March 25", "4 pm", "Michael", "March 25");
+		b.Insert("Mike", "1234", "Mike Password", "127.0.0.1", "March 25", "4 pm", "Michael", "March 25");
+		b.Insert("Tyson", "1235", "Tyson Password", "127.0.0.1", "March 25", "4 pm", "Michael", "March 25");
+		b.Insert("Ashley", "1236", "Ashley Password", "127.0.0.1", "March 25", "4 pm", "Michael", "March 25");
 		
 		ResultSet res = b.GetAll();
 		

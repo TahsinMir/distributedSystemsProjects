@@ -4,6 +4,7 @@ public class Constants
 {
 	public static String loginName = "loginName";
 	public static String uuid = "uuid";
+	public static String password = "password";
 	public static String ipAddress = "ipAddress";
 	public static String date = "date";
 	public static String time = "time";
