@@ -15,6 +15,9 @@ public class User implements Serializable {
     // we will not pass this data during serialization so it's transient
     private transient String passHash; // Most probabably we will not need it will remove in future
 
+    public User(){
+
+    }
     public User(String loginName, String realName, String uuid, String passHash, String creationIpAddress){
         this.loginName = loginName;
         this.realName = realName;

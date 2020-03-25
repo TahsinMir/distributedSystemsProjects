@@ -1,5 +1,7 @@
 package Identity.client;
 
+import Identity.server.User;
+import Identity.server.IdServerInterface;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
@@ -7,6 +9,20 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Option;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class IdClient {
     private String serverHost;
@@ -20,6 +36,7 @@ public class IdClient {
     private String newLoginName;
     private String deleteLoginName;
     private String getCommand;
+    private Logger log = Logger.getLogger(IdClient.class.getName());
 
 
 
@@ -47,7 +64,7 @@ public class IdClient {
         return options;
     }
 
-    public void extractOptions(Options options, String[] args){
+    private void extractOptions(Options options, String[] args){
         //We will validate the options here
         try{
             CommandLineParser parser = new DefaultParser();
@@ -110,10 +127,86 @@ public class IdClient {
         }
     }
 
-    public static void main(String[] args){
+    private void connectServer(){
+        try{
+            Registry registry = LocateRegistry.getRegistry(serverHost, port);
+            IdServerInterface stub = (IdServerInterface) registry.lookup("idServer");
+            executeCommand(stub);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private String getHash(String password)  {
+        MessageDigest md;
+        try{
+            md = MessageDigest.getInstance("SHA-256");
+        } catch(NoSuchAlgorithmException e){
+            return "-1";
+        }
+
+        byte[] passbyte = md.digest(password.getBytes(StandardCharsets.UTF_8));
+        BigInteger number = new BigInteger(1, passbyte);
+        // Convert message digest into hex value
+        StringBuilder hexString = new StringBuilder(number.toString(16));
+
+        // Pad with leading zeros
+        while (hexString.length() < 32){
+            hexString.insert(0, '0');
+        }
+        return hexString.toString();
+    }
+
+    private void executeCommand(IdServerInterface stub) throws RemoteException{
+        //createLoginName is saved so we need to create a user
+        String serverResponse;
+        if (createLoginName != null){
+            serverResponse = stub.create(createLoginName, realName, getHash(password));
+            System.out.println(serverResponse);
+        }
+        if (lookUpQuery != null){
+            // This is a lookup query
+            // Lookupquery should contain the loginName
+            User searchedUser = stub.lookup(lookUpQuery);
+            if(searchedUser != null){
+                System.out.println("No user found with login name : " + lookUpQuery);
+            }else{
+                // we found a user
+                System.out.println(searchedUser);
+            }
+        }
+        if (reverseLookUpQuery != null){
+            // This is a lookup query
+            // Lookupquery should contain the loginName
+            User searchedUser = stub.reverseLookUp(reverseLookUpQuery);
+            if(searchedUser != null){
+                System.out.println("No user found with UUID : " + reverseLookUpQuery);
+            }else{
+                // we found a user
+                System.out.println(searchedUser);
+            }
+        }
+        if(oldLoginName != null){
+            // This is modify command
+            serverResponse = stub.modify(oldLoginName, newLoginName, getHash(password));
+            System.out.println(serverResponse);
+        }
+        if(deleteLoginName != null){
+             serverResponse = stub.delete(deleteLoginName, getHash(password));
+             System.out.println(serverResponse);
+        }
+        if(getCommand != null){
+            List<String> ServerResponses = stub.get(getCommand);
+            ServerResponses.forEach(System.out::println);
+        }
+
+    }
+
+    public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException {
         Options options = makeOption();
 
         IdClient client = new IdClient();
         client.extractOptions(options, args);
+        client.connectServer();
     }
 }
