@@ -57,6 +57,10 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
         super();
     }
 
+    public void bind(){
+
+    }
+
     public static void main(String args[]) throws RemoteException{
         Registry registry = LocateRegistry.createRegistry(5099);
         registry.rebind("idServer", new IdServer());

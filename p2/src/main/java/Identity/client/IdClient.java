@@ -39,8 +39,6 @@ public class IdClient {
     private Logger log;
 
     public IdClient(){
-        System.setProperty("javax.net.ssl.trustStore", "security/Client_Truststore");
-        System.setProperty("java.security.policy", "security/mysecurity.policy");
         log = Logger.getLogger(IdClient.class.getName());
     }
 
