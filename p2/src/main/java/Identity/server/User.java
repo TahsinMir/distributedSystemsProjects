@@ -1,16 +1,19 @@
 package Identity.server;
 
 import java.io.Serializable;
+import java.sql.Time;
 import java.util.Date;
+import java.util.UUID;
 
 // This will be passed from server to client
 public class User implements Serializable {
     private static final long serialVersionUID = 8510538827054962873L;
-    private String uuid;
     private String loginName;
-    private String realName;
-    private Date createdTime;
+    private UUID uuid;
     private String creationIpAddress;
+    private Date createdDate;
+    private Time createdTime;
+    private String realName;
     private Date lastChangeDate;
     // we will not pass this data during serialization so it's transient
     private transient String passHash; // Most probabably we will not need it will remove in future
@@ -18,29 +21,41 @@ public class User implements Serializable {
     public User(){
 
     }
-    public User(String loginName, String realName, String uuid, String passHash, String creationIpAddress){
+    public User(String loginName, UUID uuid, String passHash, String creationIpAddress, String realName){
+    	//String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate
         this.loginName = loginName;
-        this.realName = realName;
         this.uuid = uuid;
         this.passHash = passHash;
         this.creationIpAddress = creationIpAddress;
+        this.realName = realName;
+    }
+    
+    public User(String loginName, UUID uuid, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate)
+    {
+    	this.loginName = loginName;
+        this.uuid = uuid;
+        this.creationIpAddress = creationIpAddress;
+        this.createdDate = createdDate;
+        this.createdTime = createdTime;
+        this.realName = realName;
+        this.lastChangeDate = lastChangeDate;
     }
 
-    public User(String loginName, String realName, String uuid){
+    public User(String loginName, UUID uuid, String realName){
         this.loginName = loginName;
-        this.realName = realName;
         this.uuid = uuid;
+        this.realName = realName;
     }
 
     public static long getSerialVersionUID() {
         return serialVersionUID;
     }
 
-    public String getUuid() {
+    public UUID getUuid() {
         return uuid;
     }
 
-    public void setUuid(String uuid) {
+    public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
 
@@ -60,12 +75,22 @@ public class User implements Serializable {
         this.realName = realName;
     }
 
-    public Date getCreatedTime() {
-        return createdTime;
+    public Date getCreatedDate() {
+        return createdDate;
     }
 
-    public void setCreatedTime(Date createdTime) {
-        this.createdTime = createdTime;
+    public void setCreatedDate(Date createdDate) {
+        this.createdDate = createdDate;
+    }
+    
+    public Time getCreatedTime()
+    {
+    	return createdTime;
+    }
+    
+    public void setCreatedTime(Time createdTime)
+    {
+    	this.createdTime = createdTime;
     }
 
     public String getCreationIpAddress() {

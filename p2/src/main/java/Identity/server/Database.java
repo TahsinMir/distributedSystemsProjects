@@ -6,6 +6,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.math.BigInteger;
 import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 public class Database
 {
@@ -29,7 +37,7 @@ public class Database
 		}
 		
 	}
-	private boolean Insert(String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate)
+	public boolean Insert(String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate)
 	{
 		try
 		{
@@ -61,7 +69,7 @@ public class Database
 		}
 	}
 	
-	private boolean Delete(String key, String value)
+	public boolean Delete(String key, String value)
 	{
 		if(!(key.equals(Constants.loginName) || key.equals(Constants.uuid)))
 		{
@@ -81,7 +89,51 @@ public class Database
 			return false;
 		}
 	}
-	private boolean Update(String keyType, String keyValue, String changeType, String changeValue)
+	public User Search(String key, String value)
+	{
+		if(!(key.equals(Constants.loginName) || key.equals(Constants.uuid)))
+		{
+			System.out.println("Invalid key for deletion");
+			return null;
+		}
+		
+		
+		try
+		{
+			ResultSet result = statement.executeQuery("select * from user where " + key + "='" + value + "';");
+			
+			if(!result.next())
+			{
+				System.out.println("user information not found while searching");
+				return null;
+			}
+			
+			String loginName = result.getString(Constants.loginName);
+			String uuidStr = result.getString(Constants.uuid);
+			UUID uuid = UUID.fromString(uuidStr);
+			String creationIpAddress = result.getString(Constants.ipAddress);
+			SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+			Date createdDate = dateFormatter.parse(result.getString(Constants.date));
+			LocalTime createTime = LocalTime.parse(result.getString(Constants.time));
+			Time createTimeSqlTime = Time.valueOf(createTime);
+			String realName = result.getString(Constants.realUserName);
+			Date lastChangeDate = dateFormatter.parse(result.getString(Constants.lastChangeDate));
+			User user = new User(loginName, uuid, creationIpAddress, createdDate, createTimeSqlTime, realName, lastChangeDate);	//String loginName, String uuid, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate
+			
+			return user;
+		}
+		catch (SQLException e)
+		{
+			System.out.println("SQLException during user search: " + e.getStackTrace());
+			return null;
+		}
+		catch(ParseException e)
+		{
+			System.out.println("ParseException during user search: " + e.getStackTrace());
+			return null;
+		}
+	}
+	public boolean Update(String keyType, String keyValue, String changeType, String changeValue)
 	{
 		if(!(keyType.equals(Constants.loginName) || keyType.equals(Constants.uuid)))
 		{
@@ -164,7 +216,65 @@ public class Database
 		
 		return true;
 	}
-	private ResultSet GetAll()
+	public List<String> GetList(String listType)
+	{
+		try
+		{
+			if(listType.equals(Constants.users))
+			{
+				ResultSet result = statement.executeQuery("select loginName from user");
+				
+				List<String> users = new ArrayList<String>();
+				while(result.next())
+				{
+					users.add(result.getString(Constants.loginName));
+				}
+				return users;
+			}
+			else if(listType.equals(Constants.uuids))
+			{
+				ResultSet result = statement.executeQuery("select uuid from user");
+				
+				List<String> uuids = new ArrayList<String>();
+				while(result.next())
+				{
+					uuids.add(result.getString(Constants.uuid));
+				}
+				return uuids;
+			}
+			else if(listType.equals(Constants.all))
+			{
+				ResultSet result = statement.executeQuery("select * from user");
+				
+				List<String> all = new ArrayList<String>();
+				while(result.next())
+				{
+					String loginName = result.getString(Constants.loginName);
+					String uuid = result.getString(Constants.uuid);
+					String ipAddress = result.getString(Constants.ipAddress);
+					String date = result.getString(Constants.date);
+					String time = result.getString(Constants.time);
+					String realUserName = result.getString(Constants.realUserName);
+					String lastChangeDate = result.getString(Constants.lastChangeDate);
+					
+					String oneUser = Constants.loginName + ": " + loginName + ", " + Constants.uuid + ": " + uuid + ", " + Constants.ipAddress + ": " + ipAddress + ", " + Constants.date + ": " + date + ", " + Constants.time + ": " + time + ", " + Constants.realUserName + ": " + realUserName + ", " + Constants.lastChangeDate + ": " + lastChangeDate;
+					all.add(oneUser);
+				}
+				
+				return all;
+			}
+			else
+			{
+				return null;
+			}
+		}
+		catch (SQLException e)
+		{
+			System.out.println("SQLException during retriving data: " + e.getStackTrace());
+			return null;
+		}
+	}
+	public ResultSet GetAll()
 	{
 		try
 		{
@@ -178,7 +288,7 @@ public class Database
 		}
 	}
 	
-	private boolean CloseDB()
+	public boolean CloseDB()
 	{
 		try
 		{
@@ -193,7 +303,7 @@ public class Database
 		}
 	}
 	
-	private void printAll(ResultSet response)
+	public void printAll(ResultSet response)
 	{
 		try {
 			while(response.next())
@@ -234,14 +344,45 @@ public class Database
 	{
 		Database b = new Database();
 		
-		b.Insert("Mike", "1234", "Mike Password", "127.0.0.1", "March 25", "4 pm", "Michael", "March 25");
-		b.Insert("Tyson", "1235", "Tyson Password", "127.0.0.1", "March 25", "4 pm", "Michael", "March 25");
-		b.Insert("Ashley", "1236", "Ashley Password", "127.0.0.1", "March 25", "4 pm", "Michael", "March 25");
+		UUID one = UUID.randomUUID();
+		UUID two = UUID.randomUUID();
+		UUID three = UUID.randomUUID();
+		String oneStr = one.toString();
+		String twoStr = two.toString();
+		String threeStr = three.toString();
+		LocalDate dateNow = LocalDate.now();
+   		String dateNowString = dateNow.toString();
+   		LocalTime timeNow = LocalTime.now();
+   		String timeNowString = timeNow.toString();
+		b.Insert("Mike", oneStr, "Mike Password", "127.0.0.1", dateNowString, timeNowString, "Michael", dateNowString);
+		b.Insert("Tyson", twoStr, "Tyson Password", "127.0.0.1", dateNowString, timeNowString, "Michael", dateNowString);
+		b.Insert("Ashley", threeStr, "Ashley Password", "127.0.0.1", dateNowString, timeNowString, "Michael", dateNowString);
 		
 		ResultSet res = b.GetAll();
 		
 		System.out.println("printing all");
 		b.printAll(res);
+		
+		System.out.println("Getting all loginName:");
+		List<String> allLoginName = b.GetList(Constants.users);
+		for(int i=0;i<allLoginName.size();i++)
+		{
+			System.out.println(allLoginName.get(i));
+		}
+		
+		System.out.println("Getting all uuid:");
+		List<String> allUUID = b.GetList(Constants.uuids);
+		for(int i=0;i<allUUID.size();i++)
+		{
+			System.out.println(allUUID.get(i));
+		}
+		
+		System.out.println("Getting all info of all users:");
+		List<String> allInfo = b.GetList(Constants.all);
+		for(int i=0;i<allInfo.size();i++)
+		{
+			System.out.println(allInfo.get(i));
+		}
 		
 		System.out.println("Deleting tyson");
 		b.Delete(Constants.loginName, "Tyson");
@@ -266,6 +407,20 @@ public class Database
 		
 		System.out.println("printing all again");
 		b.printAll(res4);
+		
+		System.out.println("searching for mike's info:");
+		User user = b.Search(Constants.loginName, "Mike");
+		
+		if(user == null)
+		{
+			System.out.println("user not found");
+		}
+		else
+		{
+			System.out.println("user found!!");
+			//String loginName, String uuid, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate
+			System.out.println(user.getLoginName() + ", " + user.getUuid() + ", " + user.getCreationIpAddress() + ", " + user.getCreatedDate() + ", " + user.getCreatedTime() + ", " + user.getRealName() + ", " + user.getLastChangeDate());
+		}
 		
 		b.CloseDB();
 	}

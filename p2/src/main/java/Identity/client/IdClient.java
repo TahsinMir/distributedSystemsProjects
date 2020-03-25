@@ -165,7 +165,7 @@ public class IdClient {
         //createLoginName is saved so we need to create a user
         String serverResponse;
         if (createLoginName != null){
-            serverResponse = stub.create(createLoginName, realName, getHash(password));
+            serverResponse = stub.create(createLoginName, realName, getHash(password), serverHost);
             System.out.println(serverResponse);
         }
         if (lookUpQuery != null){
