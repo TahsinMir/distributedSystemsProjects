@@ -36,7 +36,13 @@ public class IdClient {
     private String newLoginName;
     private String deleteLoginName;
     private String getCommand;
-    private Logger log = Logger.getLogger(IdClient.class.getName());
+    private Logger log;
+
+    public IdClient(){
+        System.setProperty("javax.net.ssl.trustStore", "security/Client_Truststore");
+        System.setProperty("java.security.policy", "security/mysecurity.policy");
+        log = Logger.getLogger(IdClient.class.getName());
+    }
 
 
 

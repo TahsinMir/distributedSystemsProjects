@@ -10,7 +10,7 @@ import java.util.List;
 public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
     public String create(String LoginName, String realName, String password) throws RemoteException{
-        //TODO: This is dummy. Remove this query from database using the loginName
+        // TODO: This is dummy. Remove this query from database using the loginName
         // Create UUID
         return "username created successfully";
     }
@@ -48,7 +48,6 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
         return userFromDatabase;
     }
-
 
     public String sayHello(String input){
         return "Say Hello from server: " + input;
