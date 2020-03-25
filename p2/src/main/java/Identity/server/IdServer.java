@@ -40,18 +40,31 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
     }
 
     public User lookup(String loginName) throws RemoteException
-    {    	
+    {
+    	if(db == null)
+    	{
+    		db = new Database();
+    	}
         User result = db.Search(Constants.loginName, loginName);
         return result;
     }
 
     public User reverseLookUp(String UUID) throws RemoteException
     {
+    	if(db == null)
+    	{
+    		db = new Database();
+    	}
         User result = db.Search(Constants.uuid, UUID);
         return result;
     }
 
-    public String modify(String oldLoginName, String newLoginName, String password) throws RemoteException{
+    public String modify(String oldLoginName, String newLoginName, String password) throws RemoteException
+    {
+    	if(db == null)
+    	{
+    		db = new Database();
+    	}
         
     	boolean result = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName);
     	
@@ -81,6 +94,11 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
     public String delete(String loginName, String password) throws RemoteException
     {
+    	if(db == null)
+    	{
+    		db = new Database();
+    	}
+    	
     	boolean result = db.Delete(Constants.loginName, loginName);
     	
     	if(!result)
@@ -93,6 +111,11 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
     public List<String> get(String option) throws RemoteException
     {
+    	if(db == null)
+    	{
+    		db = new Database();
+    	}
+    	
         List<String> result = db.GetList(option);
 
         return result;
