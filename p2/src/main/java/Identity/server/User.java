@@ -89,8 +89,10 @@ public class User implements Serializable {
         this.passHash = passHash;
     }
 
-
-
+    public String toString(){
+        String date = (this.createdTime == null) ? this.createdTime.toString() : "Not available";
+        return "User name: " + this.loginName + " UUID: " + this.uuid + " Creation time: " + date;
+    }
 }
 //
 
