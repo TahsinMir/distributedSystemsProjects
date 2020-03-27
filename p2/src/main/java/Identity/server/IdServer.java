@@ -36,7 +36,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
     		db = new Database(log);
     	}
     	
-    	boolean insertionResult = false;
+    	String insertionResult;
    		UUID randomUUID = UUID.randomUUID();
    		String uuid = randomUUID.toString();
    		LocalDate dateNow = LocalDate.now();
@@ -47,11 +47,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
    		//String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate
     	insertionResult = db.Insert(LoginName, uuid, password, ipAddress, dateNowString, timeNowString, realName, dateNowString);
     	
-    	if(insertionResult)
-    	{
-    		return Constants.success;
-    	}
-    	return Constants.failure;
+    	return insertionResult;
     }
 
     public User lookup(String loginName) throws RemoteException
@@ -83,26 +79,21 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
         
     	if(!db.CheckPassword(Constants.loginName, oldLoginName, password))
     	{
-    		return Constants.failure;
+    		return Constants.failure + Constants.colon + Constants.wrongPassword;
     	}
     	
-    	boolean result = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName);
+    	String resultUpdate = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName);
     	
-    	if(!result)
+    	if(resultUpdate.startsWith(Constants.failure))
     	{
-    		return Constants.failure;
+    		return resultUpdate;
     	}
     	
     	LocalDate dateNow = LocalDate.now();
    		String dateNowString = dateNow.toString();
-    	result = db.Update(Constants.loginName, newLoginName, Constants.lastChangeDate, dateNowString);
+    	String resultUpdateLastChange = db.Update(Constants.loginName, newLoginName, Constants.lastChangeDate, dateNowString);
     	
-    	if(!result)
-    	{
-    		return Constants.failure;
-    	}
-    	
-    	return Constants.success;
+    	return resultUpdateLastChange;
     }
 
     public String delete(String loginName, String password) throws RemoteException
@@ -117,14 +108,9 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
     		return Constants.failure;
     	}
     	
-    	boolean result = db.Delete(Constants.loginName, loginName);
+    	String result = db.Delete(Constants.loginName, loginName);
     	
-    	if(!result)
-    	{
-    		return Constants.failure;
-    	}
-    	
-    	return Constants.success;
+    	return result;
     }
 
     public List<String> get(String option) throws RemoteException

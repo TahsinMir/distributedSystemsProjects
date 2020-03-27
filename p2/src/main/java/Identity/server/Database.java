@@ -43,23 +43,22 @@ public class Database
 		}
 		
 	}
-	public boolean Insert(String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate)
+	public String Insert(String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate)
 	{
 		try
 		{
 			ResultSet checkExist = statement.executeQuery("select * from user where " + "loginName='" + loginName + "' or uuid='" + uuid + "';");
-			log.info("New user inserted into database: " + loginName);
 			
 			if(checkExist.next())
 			{
-				log.warning("user with same login name or uuid already exists");
-				return false;
+				log.warning(Constants.userAlreadyExists);
+				return Constants.failure + Constants.colon + Constants.userAlreadyExists;
 			}
 		}
 		catch (SQLException e)
 		{
-			log.warning("Error occured during database checking: " + e.getStackTrace().toString());
-			return false;
+			log.warning(Constants.sqlException + Constants.dbChecking);
+			return Constants.failure + Constants.colon + Constants.errorOccured + Constants.insertion;
 		}
 		
 		String query = "insert into user values('" + loginName + "', '" + uuid + "', '" + password + "', '" + ipAddress + "', '" + date + "', '" + time + "', '" + realUserName + "', '" + lastChangeDate + "')";
@@ -67,41 +66,61 @@ public class Database
 		try
 		{
 			statement.executeUpdate(query);
-			return true;
+			log.info(Constants.dataInserted + Constants.colon + loginName);
+			return Constants.success + Constants.colon + Constants.dataInserted + Constants.colon + loginName;
 		}
 		catch (SQLException e)
 		{
-			log.warning("SQLException during insertion: " + e.getStackTrace());
-			return false;
+			log.warning(Constants.sqlException + Constants.insertion + Constants.colon + e.getStackTrace().toString());
+			return Constants.failure + Constants.colon + Constants.errorOccured + Constants.insertion;
 		}
 	}
 	
-	public boolean Delete(String key, String value)
+	public String Delete(String key, String value)
 	{
 		if(!(key.equals(Constants.loginName) || key.equals(Constants.uuid)))
 		{
-			System.out.println("Invalid key for deletion");
-			return false;
+			System.out.println(Constants.invalidKey +  Constants.deletion);
+			return Constants.failure + Constants.colon + Constants.invalidKey +  Constants.deletion;
 		}
+		
+		
+		try
+		{
+			ResultSet checkExist = statement.executeQuery("select * from user where " + key + "='" + value + "';");
+			
+			if(!checkExist.next())
+			{
+				log.warning(Constants.userNotFound + Constants.space + Constants.during + Constants.space + Constants.deletion);
+				return Constants.failure + Constants.colon + Constants.userNotFound + Constants.space + Constants.during + Constants.space + Constants.deletion;
+			}
+		}
+		catch (SQLException e)
+		{
+			log.warning(Constants.sqlException + Constants.dbChecking);
+			return Constants.failure + Constants.colon + Constants.errorOccured + Constants.deletion;
+		}
+		
 		String query = "delete from user where " + key + "='" + value + "';";
 		
 		try
 		{
 			statement.executeUpdate(query);
-			return true;
+			return Constants.success + Constants.colon + Constants.dataDeleted + Constants.colon + value;
 		}
 		catch (SQLException e)
 		{
-			System.out.println("SQLException during deletion: " + e.getStackTrace());
-			return false;
+			log.warning(Constants.sqlException + Constants.deletion + Constants.colon + e.getStackTrace().toString());
+			return Constants.failure + Constants.colon + Constants.errorOccured + Constants.deletion;
 		}
 	}
 	public User Search(String key, String value)
 	{
 		if(!(key.equals(Constants.loginName) || key.equals(Constants.uuid)))
 		{
-			System.out.println("Invalid key for deletion");
-			return null;
+			log.warning(Constants.invalidKey +  Constants.userSearch);
+			User user = new User(Constants.failure + Constants.colon + Constants.invalidKey +  Constants.userSearch);
+			return user;
 		}
 		
 		
@@ -111,8 +130,9 @@ public class Database
 			
 			if(!result.next())
 			{
-				System.out.println("user information not found while searching");
-				return null;
+				log.warning(Constants.userNotFound);
+				User user = new User(Constants.failure + Constants.colon + Constants.userNotFound);
+				return user;
 			}
 			
 			String loginName = result.getString(Constants.loginName);
@@ -125,27 +145,29 @@ public class Database
 			Time createTimeSqlTime = Time.valueOf(createTime);
 			String realName = result.getString(Constants.realUserName);
 			Date lastChangeDate = dateFormatter.parse(result.getString(Constants.lastChangeDate));
-			User user = new User(loginName, uuid, creationIpAddress, createdDate, createTimeSqlTime, realName, lastChangeDate);	//String loginName, String uuid, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate
+			User user = new User(loginName, uuid, creationIpAddress, createdDate, createTimeSqlTime, realName, lastChangeDate, Constants.success + Constants.colon + Constants.dataFound);	//String loginName, String uuid, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate
 			
 			return user;
 		}
 		catch (SQLException e)
 		{
-			System.out.println("SQLException during user search: " + e.getStackTrace());
-			return null;
+			log.warning(Constants.sqlException + Constants.userSearch + Constants.colon + e.getStackTrace().toString());
+			User user = new User(Constants.failure + Constants.colon + Constants.errorOccured + Constants.userSearch);
+			return user;
 		}
 		catch(ParseException e)
 		{
-			System.out.println("ParseException during user search: " + e.getStackTrace());
-			return null;
+			log.warning(Constants.parseException + Constants.userSearch + Constants.colon + e.getStackTrace());
+			User user = new User(Constants.failure + Constants.colon + Constants.errorOccured + Constants.userSearch);
+			return user;
 		}
 	}
-	public boolean Update(String keyType, String keyValue, String changeType, String changeValue)
+	public String Update(String keyType, String keyValue, String changeType, String changeValue)
 	{
 		if(!(keyType.equals(Constants.loginName) || keyType.equals(Constants.uuid)))
 		{
-			System.out.println("Invalid key for update");
-			return false;
+			log.warning(Constants.invalidKey +  Constants.update);
+			return Constants.failure + Constants.colon + Constants.invalidKey +  Constants.update;
 		}
 		
 		try
@@ -154,8 +176,8 @@ public class Database
 			
 			if(!result.next())
 			{
-				System.out.println("user information not found while updating");
-				return false;
+				log.warning(Constants.userNotFound + Constants.during + Constants.update);
+				return Constants.failure + Constants.colon  + Constants.userNotFound + Constants.during + Constants.update;
 			}
 			
 			
@@ -168,14 +190,14 @@ public class Database
 			String realUserName = result.getString(Constants.realUserName);
 			String lastChangeDate = result.getString(Constants.lastChangeDate);
 			
-			boolean deletionResult = Delete(Constants.loginName, loginName);
-			if(!deletionResult)
+			String deletionResult = Delete(Constants.loginName, loginName);
+			if(deletionResult.startsWith(Constants.failure))
 			{
-				System.out.println("Deletion of old data failed during update");
-				return false;
+				log.warning(Constants.userDeletionFailed + Constants.space + Constants.during + Constants.space + Constants.update);
+				return Constants.failure + Constants.colon + Constants.userUpdateFailed;
 			}
 
-			boolean addResult = true;
+			String addResult;
 			if(changeType.equals(Constants.loginName))
 			{
 				addResult = Insert(changeValue, uuid, password, ipAddress, date, time, realUserName, lastChangeDate);
@@ -208,20 +230,24 @@ public class Database
 			{
 				addResult = Insert(loginName, uuid, password, ipAddress, date, time, realUserName, changeValue);
 			}
-			
-			if(!addResult)
+			else
 			{
-				System.out.println("Insertion of new data failed during update");
-				return false;
+				addResult = Constants.failure;
+			}
+			
+			if(addResult.startsWith(Constants.failure))
+			{
+				log.warning(Constants.userInsertionFailed + Constants.space + Constants.during + Constants.update);
+				return Constants.failure + Constants.colon + Constants.userUpdateFailed;
 			}
 		}
 		catch(SQLException e)
 		{
-			System.out.println("SQLException occured during updating: " + e.getStackTrace());
-			return false;
+			log.warning(Constants.sqlException + Constants.update + Constants.colon + e.getStackTrace().toString());
+			return Constants.failure + Constants.colon + Constants.errorOccured + Constants.update;
 		}
 		
-		return true;
+		return Constants.success + Constants.colon + Constants.dataUpdated;
 	}
 	public boolean CheckPassword(String keyType, String keyValue, String password)
 	{
