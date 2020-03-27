@@ -1,6 +1,8 @@
 package Identity.server;
 
   
+import Identity.client.IdClient;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -14,26 +16,30 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 public class Database
 {
 	private Connection connection = null;
 	private Statement statement;
+	Logger log;
 	
-	public Database()
+	public Database(Logger logger)
 	{
+		log = logger;
 		try
 		{
 			connection = DriverManager.getConnection("jdbc:sqlite:userinfo.db");
 			statement = connection.createStatement();
 			statement.setQueryTimeout(30);
+			log.info("Database connection established");
 			
 			statement.executeUpdate("create table if not exists user (loginName string, uuid string, password string, ipAddress string, date string, time string, realUserName string, lastChangeDate string)");
-			
+			log.info("Initial table created");
 		}
 		catch (SQLException e)
 		{
-			System.out.println("SQLException during setting up database connection: " + e.getStackTrace());
+			log.warning("SQLException during setting up database connection: " + e.getStackTrace().toString());
 		}
 		
 	}
@@ -42,16 +48,17 @@ public class Database
 		try
 		{
 			ResultSet checkExist = statement.executeQuery("select * from user where " + "loginName='" + loginName + "' or uuid='" + uuid + "';");
+			log.info("New user inserted into database: " + loginName);
 			
 			if(checkExist.next())
 			{
-				System.out.println("user with same login name or uuid already exists");
+				log.warning("user with same login name or uuid already exists");
 				return false;
 			}
 		}
 		catch (SQLException e)
 		{
-			System.out.println("Error occured during database checking: " + e.getStackTrace());
+			log.warning("Error occured during database checking: " + e.getStackTrace().toString());
 			return false;
 		}
 		
@@ -64,7 +71,7 @@ public class Database
 		}
 		catch (SQLException e)
 		{
-			System.out.println("SQLException during insertion: " + e.getStackTrace());
+			log.warning("SQLException during insertion: " + e.getStackTrace());
 			return false;
 		}
 	}
@@ -342,7 +349,8 @@ public class Database
 	
 	public static void main( String args[] ) throws ClassNotFoundException
 	{
-		Database b = new Database();
+		Logger log = Logger.getLogger(IdClient.class.getName());
+		Database b = new Database(log);
 		
 		UUID one = UUID.randomUUID();
 		UUID two = UUID.randomUUID();

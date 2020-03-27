@@ -11,14 +11,28 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import Identity.client.IdClient;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Option;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 	
 	private Database db = null;
+	private int ServerPort = 5099;
+	private boolean isVerbose = false;
+	private Logger log;
 
     public String create(String LoginName, String realName, String password, String ipAddress) throws RemoteException{
     	if(db == null)
     	{
-    		db = new Database();
+    		db = new Database(log);
     	}
     	
     	boolean insertionResult = false;
@@ -43,7 +57,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
     {
     	if(db == null)
     	{
-    		db = new Database();
+    		db = new Database(log);
     	}
         User result = db.Search(Constants.loginName, loginName);
         return result;
@@ -53,7 +67,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
     {
     	if(db == null)
     	{
-    		db = new Database();
+    		db = new Database(log);
     	}
         User result = db.Search(Constants.uuid, UUID);
         return result;
@@ -64,7 +78,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
     	//TODO: Now modifing even if password doesn't match
     	if(db == null)
     	{
-    		db = new Database();
+    		db = new Database(log);
     	}
         
     	boolean result = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName);
@@ -98,7 +112,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 		//TODO: Now deleting even if password doesn't match
     	if(db == null)
     	{
-    		db = new Database();
+    		db = new Database(log);
     	}
     	
     	boolean result = db.Delete(Constants.loginName, loginName);
@@ -115,7 +129,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
     {
     	if(db == null)
     	{
-    		db = new Database();
+    		db = new Database(log);
     	}
     	
         List<String> result = db.GetList(option);
@@ -129,15 +143,39 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
     public IdServer() throws RemoteException{
         super();
+		log = Logger.getLogger(IdClient.class.getName());
     }
 
-    public void bind(){
+	public static Options makeOption(){
+		Options options = new Options();
+		//Adding the command line options
+		options.addOption("v", "verbose", false, "Print the details");
+		options.addRequiredOption("n", "numport", true, "The port on which server will run");
 
-    }
+		return options;
+	}
+	public void extractOption(Options options, String[] args){
+		try {
+			CommandLineParser parser = new DefaultParser();
+			CommandLine cmd = parser.parse(options, args);
+			ServerPort = Integer.parseInt(cmd.getOptionValue("numport"));
+			isVerbose = cmd.hasOption("verbose");
+			log.setLevel(isVerbose? Level.ALL : Level.OFF);
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+	}
+
+	public int getServerPort(){
+    	return ServerPort;
+	}
 
     public static void main(String args[]) throws RemoteException{
-        Registry registry = LocateRegistry.createRegistry(5099);
-        registry.rebind("idServer", new IdServer());
-    }
+		Options options = makeOption();
+		IdServer server = new IdServer();
+		server.extractOption(options, args);
 
+        Registry registry = LocateRegistry.createRegistry(server.getServerPort());
+        registry.rebind("idServer", server);
+    }
 }
