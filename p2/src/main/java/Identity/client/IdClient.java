@@ -85,7 +85,6 @@ public class IdClient {
                 port = Integer.parseInt(cmd.getOptionValue("numport"));
             }else{
                 System.err.println("Server host name and port is required");
-                formatter.printHelp("IdClient", options);
                 System.exit(0);
             }
 

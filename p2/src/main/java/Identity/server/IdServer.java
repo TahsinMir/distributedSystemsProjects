@@ -150,7 +150,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 		Options options = new Options();
 		//Adding the command line options
 		options.addOption("v", "verbose", false, "Print the details");
-		options.addRequiredOption("n", "numport", true, "The port on which server will run");
+		options.addOption("n", "numport", true, "The port on which server will run");
 
 		return options;
 	}
