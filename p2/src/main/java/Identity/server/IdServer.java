@@ -61,6 +61,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
     public String modify(String oldLoginName, String newLoginName, String password) throws RemoteException
     {
+    	//TODO: Now modifing even if password doesn't match
     	if(db == null)
     	{
     		db = new Database();
@@ -94,6 +95,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
     public String delete(String loginName, String password) throws RemoteException
     {
+		//TODO: Now deleting even if password doesn't match
     	if(db == null)
     	{
     		db = new Database();

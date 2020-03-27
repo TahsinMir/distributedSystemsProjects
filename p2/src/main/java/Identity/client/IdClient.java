@@ -118,10 +118,20 @@ public class IdClient {
             if(cmd.hasOption("get")){
                 // This argument can have these three value: users | UUID | all
                 String getOptionsValue = cmd.getOptionValue("get");
-                if(getOptionsValue.equals("users") || getOptionsValue.equals("UUID") || getOptionsValue.equals("all")){
+                if(getOptionsValue.equals("users") || getOptionsValue.equals("uuids") || getOptionsValue.equals("all")){
                     getCommand = getOptionsValue;
                 }else{
-                    System.err.println("get can have either of these value: users | UUID | all");
+                    System.err.println("get can have either of these value: users | uuids | all");
+                }
+            }
+            if(cmd.hasOption("modify")){
+                String[] modifyOptions = cmd.getOptionValues("modify");
+
+                if(modifyOptions.length == 2){
+                    oldLoginName = modifyOptions[0];
+                    newLoginName = modifyOptions[1];
+                }else{
+                    System.err.println("Modified user name is required");
                 }
             }
 
@@ -172,7 +182,7 @@ public class IdClient {
             // This is a lookup query
             // Lookupquery should contain the loginName
             User searchedUser = stub.lookup(lookUpQuery);
-            if(searchedUser != null){
+            if(searchedUser == null){
                 System.out.println("No user found with login name : " + lookUpQuery);
             }else{
                 // we found a user
@@ -183,7 +193,7 @@ public class IdClient {
             // This is a lookup query
             // Lookupquery should contain the loginName
             User searchedUser = stub.reverseLookUp(reverseLookUpQuery);
-            if(searchedUser != null){
+            if(searchedUser == null){
                 System.out.println("No user found with UUID : " + reverseLookUpQuery);
             }else{
                 // we found a user
