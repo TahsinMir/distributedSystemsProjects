@@ -223,6 +223,38 @@ public class Database
 		
 		return true;
 	}
+	public boolean CheckPassword(String keyType, String keyValue, String password)
+	{
+		if(!(keyType.equals(Constants.loginName) || keyType.equals(Constants.uuid)))
+		{
+			System.out.println("Invalid key type for checking password");
+			return false;
+		}
+		
+		try
+		{
+			ResultSet result = statement.executeQuery("select * from user where " + keyType + "='" + keyValue + "';");
+			
+			if(!result.next())
+			{
+				System.out.println("user information not found while checking password");
+				return false;
+			}
+			
+			String passwordFromDB = result.getString(Constants.password);
+			
+			if(passwordFromDB.equals(password))
+			{
+				return true;
+			}
+			return false;
+		}
+		catch (SQLException e)
+		{
+			System.out.println("SQLException during user password check: " + e.getStackTrace());
+			return false;
+		}
+	}
 	public List<String> GetList(String listType)
 	{
 		try

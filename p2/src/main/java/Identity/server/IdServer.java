@@ -29,7 +29,8 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 	private boolean isVerbose = false;
 	private Logger log;
 
-    public String create(String LoginName, String realName, String password, String ipAddress) throws RemoteException{
+    public String create(String LoginName, String realName, String password, String ipAddress) throws RemoteException
+    {
     	if(db == null)
     	{
     		db = new Database(log);
@@ -75,20 +76,17 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
     public String modify(String oldLoginName, String newLoginName, String password) throws RemoteException
     {
-    	//TODO: Now modifing even if password doesn't match
     	if(db == null)
     	{
     		db = new Database(log);
     	}
         
-    	boolean result = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName);
-    	
-    	if(!result)
+    	if(!db.CheckPassword(Constants.loginName, oldLoginName, password))
     	{
     		return Constants.failure;
     	}
     	
-    	result = db.Update(Constants.loginName, newLoginName, Constants.password, password);
+    	boolean result = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName);
     	
     	if(!result)
     	{
@@ -109,10 +107,14 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
     public String delete(String loginName, String password) throws RemoteException
     {
-		//TODO: Now deleting even if password doesn't match
-    	if(db == null)
+		if(db == null)
     	{
     		db = new Database(log);
+    	}
+    	
+    	if(!db.CheckPassword(Constants.loginName, loginName, password))
+    	{
+    		return Constants.failure;
     	}
     	
     	boolean result = db.Delete(Constants.loginName, loginName);
