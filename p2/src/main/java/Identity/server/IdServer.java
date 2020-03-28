@@ -105,7 +105,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
     	
     	if(!db.CheckPassword(Constants.loginName, loginName, password))
     	{
-    		return Constants.failure;
+    		return Constants.failure + Constants.colon + Constants.wrongPassword;
     	}
     	
     	String result = db.Delete(Constants.loginName, loginName);

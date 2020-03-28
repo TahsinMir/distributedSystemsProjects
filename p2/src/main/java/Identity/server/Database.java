@@ -31,7 +31,7 @@ public class Database
 		{
 			connection = DriverManager.getConnection("jdbc:sqlite:userinfo.db");
 			statement = connection.createStatement();
-			statement.setQueryTimeout(30);
+			statement.setQueryTimeout(300);
 			log.info("Database connection established");
 			
 			statement.executeUpdate("create table if not exists user (loginName string, uuid string, password string, ipAddress string, date string, time string, realUserName string, lastChangeDate string)");
