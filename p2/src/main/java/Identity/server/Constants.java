@@ -2,6 +2,7 @@ package Identity.server;
 
 public class Constants
 {
+	//all the commands
 	public static String loginName = "loginName";
 	public static String uuid = "uuid";
 	public static String password = "password";
@@ -11,6 +12,7 @@ public class Constants
 	public static String realUserName = "realUserName";
 	public static String lastChangeDate = "lastChangeDate";
 	
+	//command helpers
 	public static String success = "success";
 	public static String failure = "failure";
 	public static String colon = ": ";
@@ -40,6 +42,7 @@ public class Constants
 	public static String parseException = "ParseException occured during ";
 	public static String invalidKey = "Invalid key for ";
 	
+	//type of arguments for getting user list
 	public static String users = "users";
 	public static String uuids = "uuids";
 	public static String all = "all";

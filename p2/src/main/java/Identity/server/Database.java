@@ -2,11 +2,6 @@ package Identity.server;
 
   
 import Identity.client.IdClient;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.math.BigInteger;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -18,22 +13,31 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+/***
+ * Represents the database
+ */
 public class Database
 {
-	private Connection connection = null;
-	private Statement statement;
-	Logger log;
+	private Connection connection = null;	//connection to the database
+	private Statement statement;	//The statement to be executed in the database
+	Logger log;		//the logger
 	
+	/***
+     * Creates the connection to the database
+     * @param logger
+     */
 	public Database(Logger logger)
 	{
 		log = logger;
 		try
 		{
+			//established sqlite database connection
 			connection = DriverManager.getConnection("jdbc:sqlite:userinfo.db");
 			statement = connection.createStatement();
 			statement.setQueryTimeout(300);
 			log.info("Database connection established");
 			
+			//creates the initial table if it doesn't already exist
 			statement.executeUpdate("create table if not exists user (loginName string, uuid string, password string, ipAddress string, date string, time string, realUserName string, lastChangeDate string)");
 			log.info("Initial table created");
 		}
@@ -47,8 +51,10 @@ public class Database
 	{
 		try
 		{
+			//first we check whether information about the same loginName or UUID already exists
 			ResultSet checkExist = statement.executeQuery("select * from user where " + "loginName='" + loginName + "' or uuid='" + uuid + "';");
 			
+			//if information already exists, we do not insert another new use with the same login name or uuid
 			if(checkExist.next())
 			{
 				log.warning(Constants.userAlreadyExists);
@@ -61,10 +67,12 @@ public class Database
 			return Constants.failure + Constants.colon + Constants.errorOccured + Constants.insertion;
 		}
 		
+		//Insertion sql query
 		String query = "insert into user values('" + loginName + "', '" + uuid + "', '" + password + "', '" + ipAddress + "', '" + date + "', '" + time + "', '" + realUserName + "', '" + lastChangeDate + "')";
 		
 		try
 		{
+			//inserting user data
 			statement.executeUpdate(query);
 			log.info(Constants.dataInserted + Constants.colon + loginName);
 			return Constants.success + Constants.colon + Constants.dataInserted + Constants.colon + loginName;
