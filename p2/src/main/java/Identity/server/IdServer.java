@@ -3,6 +3,8 @@ package Identity.server;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -19,6 +21,9 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Option;
+
+import javax.rmi.ssl.SslRMIClientSocketFactory;
+import javax.rmi.ssl.SslRMIServerSocketFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -141,9 +146,11 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
         return "Say Hello from server: " + input;
     }
 
-    public IdServer() throws RemoteException{
+    public IdServer(String[] args) throws RemoteException{
         super();
 		log = Logger.getLogger(IdClient.class.getName());
+
+		extractOption(makeOption(), args);
     }
 
 	public static Options makeOption(){
@@ -166,16 +173,36 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 		}
 	}
 
+	public void bind() {
+		try {
+			log.info("Binding server on port " + getServerPort());
+			RMIClientSocketFactory csf = new SslRMIClientSocketFactory();
+			RMIServerSocketFactory ssf = new SslRMIServerSocketFactory();
+			IdServerInterface server = (IdServerInterface) UnicastRemoteObject.exportObject(this, 0, csf,
+					ssf);
+
+			Registry registry = LocateRegistry.createRegistry(getServerPort());
+
+			registry.rebind("IdServer", server);
+			log.info("Server binding successfull");
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("Exception occurred: " + e);
+		}
+	}
+
 	public int getServerPort(){
     	return ServerPort;
 	}
 
     public static void main(String args[]) throws RemoteException{
-		Options options = makeOption();
-		IdServer server = new IdServer();
-		server.extractOption(options, args);
+		System.setProperty("javax.net.ssl.keyStore", "Security/Server_Keystore");
+		System.setProperty("javax.net.ssl.keyStorePassword", "test123");
+		System.setProperty("javax.net.ssl.trustStore", "Security/Client_Truststore");
+		System.setProperty("java.security.policy", "Security/mysecurity.policy");
 
-        Registry registry = LocateRegistry.createRegistry(server.getServerPort());
-        registry.rebind("idServer", server);
+
+		IdServer server = new IdServer(args);
+		server.bind();
     }
 }

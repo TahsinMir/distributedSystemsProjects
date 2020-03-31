@@ -216,6 +216,10 @@ public class IdClient {
     }
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException {
+        System.setProperty("javax.net.ssl.trustStore", "Security/Client_Truststore");
+        System.setProperty("java.security.policy", "Security/mysecurity.policy");
+        System.setProperty("javax.net.ssl.trustStorePassword", "test123");
+
         Options options = makeOption();
 
         IdClient client = new IdClient();
