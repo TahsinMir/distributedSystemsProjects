@@ -15,6 +15,7 @@ public class User implements Serializable {
     private Time createdTime;
     private String realName;
     private Date lastChangeDate;
+    private String modificationMessage;
     // we will not pass this data during serialization so it's transient
     private transient String passHash; // Most probabably we will not need it will remove in future
 
@@ -30,7 +31,7 @@ public class User implements Serializable {
         this.realName = realName;
     }
     
-    public User(String loginName, UUID uuid, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate)
+    public User(String loginName, UUID uuid, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate, String modificationMessage)
     {
     	this.loginName = loginName;
         this.uuid = uuid;
@@ -39,6 +40,12 @@ public class User implements Serializable {
         this.createdTime = createdTime;
         this.realName = realName;
         this.lastChangeDate = lastChangeDate;
+        this.modificationMessage = modificationMessage;
+    }
+    
+    public User(String modificationMessage)
+    {
+    	this.modificationMessage = modificationMessage;
     }
 
     public User(String loginName, UUID uuid, String realName){
@@ -116,10 +123,24 @@ public class User implements Serializable {
     public void setPassHash(String passHash) {
         this.passHash = passHash;
     }
+    
+    public String getModificationMessage()
+    {
+    	return modificationMessage;
+    }
+    
+    public void setModificationMessage(String modificationMessage)
+    {
+    	this.modificationMessage = modificationMessage;
+    }
 
-    public String toString(){
-        String date = (this.createdTime == null) ? this.createdTime.toString() : "Not available";
-        return "User name: " + this.loginName + " UUID: " + this.uuid + " Creation time: " + this.createdTime;
+    public String toString()
+    {
+    	if(this.modificationMessage.startsWith(Constants.failure))
+    	{
+    		return this.modificationMessage;
+    	}
+        return "User name: " + this.loginName + ", UUID: " + this.uuid + ", real name: " + this.realName + ", Creation IP address: " + this.creationIpAddress + ", Creation date: " + this.createdDate + ", Creation time: " + this.createdTime + ", last change date: " + this.lastChangeDate;
     }
 }
 //

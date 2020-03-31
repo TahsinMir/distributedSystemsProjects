@@ -1,6 +1,7 @@
 package Identity.client;
 
 import Identity.server.User;
+import Identity.server.Constants;
 import Identity.server.IdServerInterface;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -181,23 +182,13 @@ public class IdClient {
             // This is a lookup query
             // Lookupquery should contain the loginName
             User searchedUser = stub.lookup(lookUpQuery);
-            if(searchedUser == null){
-                System.out.println("No user found with login name : " + lookUpQuery);
-            }else{
-                // we found a user
-                System.out.println(searchedUser);
-            }
+            System.out.println(searchedUser);
         }
         if (reverseLookUpQuery != null){
             // This is a lookup query
             // Lookupquery should contain the loginName
             User searchedUser = stub.reverseLookUp(reverseLookUpQuery);
-            if(searchedUser == null){
-                System.out.println("No user found with UUID : " + reverseLookUpQuery);
-            }else{
-                // we found a user
-                System.out.println(searchedUser);
-            }
+            System.out.println(searchedUser);
         }
         if(oldLoginName != null){
             // This is modify command

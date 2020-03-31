@@ -34,13 +34,14 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 	private boolean isVerbose = false;
 	private Logger log;
 
-    public String create(String LoginName, String realName, String password, String ipAddress) throws RemoteException{
+    public String create(String LoginName, String realName, String password, String ipAddress) throws RemoteException
+    {
     	if(db == null)
     	{
     		db = new Database(log);
     	}
     	
-    	boolean insertionResult = false;
+    	String insertionResult;
    		UUID randomUUID = UUID.randomUUID();
    		String uuid = randomUUID.toString();
    		LocalDate dateNow = LocalDate.now();
@@ -51,11 +52,7 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
    		//String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate
     	insertionResult = db.Insert(LoginName, uuid, password, ipAddress, dateNowString, timeNowString, realName, dateNowString);
     	
-    	if(insertionResult)
-    	{
-    		return Constants.success;
-    	}
-    	return Constants.failure;
+    	return insertionResult;
     }
 
     public User lookup(String loginName) throws RemoteException
@@ -80,54 +77,45 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 
     public String modify(String oldLoginName, String newLoginName, String password) throws RemoteException
     {
-    	//TODO: Now modifing even if password doesn't match
     	if(db == null)
     	{
     		db = new Database(log);
     	}
         
-    	boolean result = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName);
-    	
-    	if(!result)
+    	if(!db.CheckPassword(Constants.loginName, oldLoginName, password))
     	{
-    		return Constants.failure;
+    		return Constants.failure + Constants.colon + Constants.wrongPassword;
     	}
     	
-    	result = db.Update(Constants.loginName, newLoginName, Constants.password, password);
+    	String resultUpdate = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName);
     	
-    	if(!result)
+    	if(resultUpdate.startsWith(Constants.failure))
     	{
-    		return Constants.failure;
+    		return resultUpdate;
     	}
     	
     	LocalDate dateNow = LocalDate.now();
    		String dateNowString = dateNow.toString();
-    	result = db.Update(Constants.loginName, newLoginName, Constants.lastChangeDate, dateNowString);
+    	String resultUpdateLastChange = db.Update(Constants.loginName, newLoginName, Constants.lastChangeDate, dateNowString);
     	
-    	if(!result)
-    	{
-    		return Constants.failure;
-    	}
-    	
-    	return Constants.success;
+    	return resultUpdateLastChange;
     }
 
     public String delete(String loginName, String password) throws RemoteException
     {
-		//TODO: Now deleting even if password doesn't match
-    	if(db == null)
+		if(db == null)
     	{
     		db = new Database(log);
     	}
     	
-    	boolean result = db.Delete(Constants.loginName, loginName);
-    	
-    	if(!result)
+    	if(!db.CheckPassword(Constants.loginName, loginName, password))
     	{
-    		return Constants.failure;
+    		return Constants.failure + Constants.colon + Constants.wrongPassword;
     	}
     	
-    	return Constants.success;
+    	String result = db.Delete(Constants.loginName, loginName);
+    	
+    	return result;
     }
 
     public List<String> get(String option) throws RemoteException
