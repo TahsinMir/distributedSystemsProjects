@@ -27,7 +27,7 @@ import javax.rmi.ssl.SslRMIServerSocketFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class IdServer extends UnicastRemoteObject implements IdServerInterface{
+public class IdServer implements IdServerInterface{
 	
 	private Database db = null;
 	private int ServerPort = 5099;
@@ -153,7 +153,9 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 		try {
 			CommandLineParser parser = new DefaultParser();
 			CommandLine cmd = parser.parse(options, args);
-			ServerPort = Integer.parseInt(cmd.getOptionValue("numport"));
+			if(cmd.hasOption("numport")){
+				ServerPort = Integer.parseInt(cmd.getOptionValue("numport"));
+			}
 			isVerbose = cmd.hasOption("verbose");
 			log.setLevel(isVerbose? Level.ALL : Level.OFF);
 		}catch (Exception e){
@@ -170,7 +172,6 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 					ssf);
 
 			Registry registry = LocateRegistry.createRegistry(getServerPort());
-
 			registry.rebind("IdServer", server);
 			log.info("Server binding successfull");
 		} catch (Exception e) {
@@ -184,10 +185,9 @@ public class IdServer extends UnicastRemoteObject implements IdServerInterface{
 	}
 
     public static void main(String args[]) throws RemoteException{
-		System.setProperty("javax.net.ssl.keyStore", "Security/Server_Keystore");
+		System.setProperty("javax.net.ssl.keyStore", "security/Server_Keystore");
 		System.setProperty("javax.net.ssl.keyStorePassword", "test123");
-		System.setProperty("javax.net.ssl.trustStore", "Security/Client_Truststore");
-		System.setProperty("java.security.policy", "Security/mysecurity.policy");
+		System.setProperty("java.security.policy", "security/mysecurity.policy");
 
 
 		IdServer server = new IdServer(args);

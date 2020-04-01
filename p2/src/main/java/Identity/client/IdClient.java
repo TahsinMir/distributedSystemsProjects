@@ -144,7 +144,7 @@ public class IdClient {
     private void connectServer(){
         try{
             Registry registry = LocateRegistry.getRegistry(serverHost, port);
-            IdServerInterface stub = (IdServerInterface) registry.lookup("idServer");
+            IdServerInterface stub = (IdServerInterface) registry.lookup("IdServer");
             executeCommand(stub);
         } catch (Exception e){
             e.printStackTrace();
@@ -207,8 +207,9 @@ public class IdClient {
     }
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException {
-        System.setProperty("javax.net.ssl.trustStore", "Security/Client_Truststore");
-        System.setProperty("java.security.policy", "Security/mysecurity.policy");
+        System.out.println(System.getProperty("user.dir"));
+        System.setProperty("javax.net.ssl.trustStore", "security/Client_Truststore");
+        System.setProperty("java.security.policy", "security/mysecurity.policy");
         System.setProperty("javax.net.ssl.trustStorePassword", "test123");
 
         Options options = makeOption();
