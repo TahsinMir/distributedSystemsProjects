@@ -1,16 +1,15 @@
 package Identity.server;
 
   
-import Identity.client.IdClient;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -606,5 +605,49 @@ public class Database
 		catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public void SaveAllToDisk()
+	{
+		Set<String> allKeys = UserInfo.keySet();
+		
+		for (String key : allKeys)
+		{
+	        User user = UserInfo.get(key);
+	        
+	        try
+			{
+				//next we check whether information about the same loginName or UUID already exists in disk
+				ResultSet checkExist = statement.executeQuery("select * from user where " + "loginName='" + user.getLoginName() + "' or uuid='" + user.getUuid() + "';");
+				
+				//if information already exists, we do not insert another new user with the same login name or uuid
+				if(checkExist.next())
+				{
+					log.warning(Constants.userAlreadyExists);
+					continue;
+				}
+			}
+			catch (SQLException e)
+			{
+				log.warning(Constants.sqlException + Constants.dbChecking);
+				continue;
+			}
+	        
+	        
+	        //Storing the information in Disk
+			//Insertion sql query
+			String query = "insert into user values('" + user.getLoginName() + "', '" + user.getUuid() + "', '" + user.getPassHash() + "', '" + user.getCreationIpAddress() + "', '" + user.getCreatedDate() + "', '" + user.getCreatedTime() + "', '" + user.getRealName() + "', '" + user.getLastChangeDate() + "')";
+			
+			try
+			{
+				//inserting user data
+				statement.executeUpdate(query);
+				log.info(Constants.dataInserted + Constants.colon + user.getLoginName());
+			}
+			catch (SQLException e)
+			{
+				log.warning(Constants.sqlException + Constants.insertion + Constants.colon + e.getStackTrace().toString());
+			}
+	    }
 	}
 }

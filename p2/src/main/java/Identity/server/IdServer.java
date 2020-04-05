@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import Identity.client.IdClient;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
@@ -183,7 +182,7 @@ public class IdServer implements IdServerInterface{
 
     public IdServer(String[] args) throws RemoteException{
         super();
-		log = Logger.getLogger(IdClient.class.getName());
+		log = Logger.getLogger(IdServer.class.getName());
 
 		if(db == null)
     	{
@@ -255,5 +254,28 @@ public class IdServer implements IdServerInterface{
 
 		IdServer server = new IdServer(args);
 		server.bind();
+		
+		//Adding shut down hook
+		Runtime.getRuntime().addShutdownHook(new Thread()
+		{
+			public void run()
+			{
+				server.HandleShutDown();
+				server.log.info("Shutting down ...");
+			}
+		});
+    }
+    
+    private void HandleShutDown()
+    {
+    	if(db == null)
+    	{
+    		db = new Database(log);
+    	}
+    	
+    	this.log.info("Saving all to disk ...");
+    	db.SaveAllToDisk();
+    	this.log.info("Closing db connection ...");
+    	db.CloseDB();
     }
 }
