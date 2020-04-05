@@ -22,14 +22,6 @@ public class User implements Serializable {
     public User(){
 
     }
-    public User(String loginName, UUID uuid, String passHash, String creationIpAddress, String realName){
-    	//String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate
-        this.loginName = loginName;
-        this.uuid = uuid;
-        this.passHash = passHash;
-        this.creationIpAddress = creationIpAddress;
-        this.realName = realName;
-    }
     
     public User(String loginName, UUID uuid, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate, String modificationMessage)
     {
@@ -41,6 +33,18 @@ public class User implements Serializable {
         this.realName = realName;
         this.lastChangeDate = lastChangeDate;
         this.modificationMessage = modificationMessage;
+    }
+    
+    public User(String loginName, UUID uuid, String passwordHash, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate)
+    {
+    	this.loginName = loginName;
+        this.uuid = uuid;
+        this.passHash = passwordHash;
+        this.creationIpAddress = creationIpAddress;
+        this.createdDate = createdDate;
+        this.createdTime = createdTime;
+        this.realName = realName;
+        this.lastChangeDate = lastChangeDate;
     }
     
     public User(String modificationMessage)

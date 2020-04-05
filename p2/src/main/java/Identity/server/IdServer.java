@@ -27,6 +27,9 @@ import javax.rmi.ssl.SslRMIServerSocketFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/***
+ * Represents the IdServer
+ */
 public class IdServer implements IdServerInterface{
 	
 	private Database db = null;
@@ -34,6 +37,16 @@ public class IdServer implements IdServerInterface{
 	private boolean isVerbose = false;
 	private Logger log;
 
+	/**
+	   * creates a new user.
+	   * @param LoginName - the login name of the user.
+	   * @param realName - the real name of the user.
+	   * @param password - the password hash of the user.
+	   * @param ipAddress - the creation ip address of the user.
+	   * @return A string explaining the result of the user creation operation.
+	   * @exception RemoteException
+	   * @see RemoteException
+	   */
     public String create(String LoginName, String realName, String password, String ipAddress) throws RemoteException
     {
     	if(db == null)
@@ -55,6 +68,13 @@ public class IdServer implements IdServerInterface{
     	return insertionResult;
     }
 
+    /**
+	   * looks for a user using login name in the database.
+	   * @param LoginName - the login name of the user.
+	   * @return User data.
+	   * @exception RemoteException
+	   * @see RemoteException
+	   */
     public User lookup(String loginName) throws RemoteException
     {
     	if(db == null)
@@ -65,6 +85,13 @@ public class IdServer implements IdServerInterface{
         return result;
     }
 
+    /**
+	   * looks for a user using uuid in the database.
+	   * @param UUID - the uuid assigned to the user.
+	   * @return User data.
+	   * @exception RemoteException
+	   * @see RemoteException
+	   */
     public User reverseLookUp(String UUID) throws RemoteException
     {
     	if(db == null)
@@ -75,6 +102,15 @@ public class IdServer implements IdServerInterface{
         return result;
     }
 
+    /**
+	   * modifies the login name of a user.
+	   * @param oldLoginName - the old login name of the user.
+	   * @param newLoginName - the new login name of the user.
+	   * @param password - the password hash of the user.
+	   * @return A string explaining the result of the user modification operation.
+	   * @exception RemoteException
+	   * @see RemoteException
+	   */
     public String modify(String oldLoginName, String newLoginName, String password) throws RemoteException
     {
     	if(db == null)
@@ -101,6 +137,14 @@ public class IdServer implements IdServerInterface{
     	return resultUpdateLastChange;
     }
 
+    /**
+	   * deletes the user information.
+	   * @param loginName - the login name of the user.
+	   * @param password - the password hash of the user.
+	   * @return A string explaining the result of the user deletion operation.
+	   * @exception RemoteException
+	   * @see RemoteException
+	   */
     public String delete(String loginName, String password) throws RemoteException
     {
 		if(db == null)
@@ -118,6 +162,13 @@ public class IdServer implements IdServerInterface{
     	return result;
     }
 
+    /**
+	   * retrieves user lists.
+	   * @param option - one of the three options types for list retrieval.
+	   * @return user lists.
+	   * @exception RemoteException
+	   * @see RemoteException
+	   */
     public List<String> get(String option) throws RemoteException
     {
     	if(db == null)
@@ -130,14 +181,15 @@ public class IdServer implements IdServerInterface{
         return result;
     }
 
-    public String sayHello(String input){
-        return "Say Hello from server: " + input;
-    }
-
     public IdServer(String[] args) throws RemoteException{
         super();
 		log = Logger.getLogger(IdClient.class.getName());
 
+		if(db == null)
+    	{
+    		db = new Database(log);
+    	}
+		
 		extractOption(makeOption(), args);
     }
 
@@ -163,6 +215,12 @@ public class IdServer implements IdServerInterface{
 		}
 	}
 
+	/**
+	   * binds the server.
+	   * @return nothing.
+	   * @exception IOException On input error.
+	   * @see IOException
+	   */
 	public void bind() {
 		try {
 			log.info("Binding server on port " + getServerPort());
@@ -174,12 +232,17 @@ public class IdServer implements IdServerInterface{
 			Registry registry = LocateRegistry.createRegistry(getServerPort());
 			registry.rebind("IdServer", server);
 			log.info("Server binding successfull");
+			log.info("server is up and running on port " + getServerPort());
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("Exception occurred: " + e);
 		}
 	}
 
+	/**
+	   * get the server port.
+	   * @return server port.
+	   */
 	public int getServerPort(){
     	return ServerPort;
 	}

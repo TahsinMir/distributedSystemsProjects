@@ -1,7 +1,6 @@
 package Identity.client;
 
 import Identity.server.User;
-import Identity.server.Constants;
 import Identity.server.IdServerInterface;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -10,12 +9,10 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Option;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import java.math.BigInteger;
 import java.net.MalformedURLException;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -25,6 +22,9 @@ import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+/***
+ * Represents the IdClient
+ */
 public class IdClient {
     private String serverHost;
     private int port;
@@ -37,14 +37,19 @@ public class IdClient {
     private String newLoginName;
     private String deleteLoginName;
     private String getCommand;
-    private Logger log;
 
-    public IdClient(){
-        log = Logger.getLogger(IdClient.class.getName());
+    public IdClient()
+    {
+       
     }
 
 
 
+    /**
+	   * makes all the option for command line.
+	   * @param nothing.
+	   * @return An Option instance.
+	   */
     public static Options makeOption(){
         Options options = new Options();
         //Adding the command line options
@@ -69,6 +74,12 @@ public class IdClient {
         return options;
     }
 
+    /**
+	   * extracts all the options from command line.
+	   * @param options - Options instance.
+	   * @param args - the arguments.
+	   * @return nothing.
+	   */
     private void extractOptions(Options options, String[] args){
         //We will validate the options here
         try{
@@ -136,21 +147,30 @@ public class IdClient {
             }
 
         } catch (ParseException e){
-            System.err.println("Error during parsing " + e.toString());
-            e.printStackTrace();
+            System.err.println("Error during parsing: " + e.getStackTrace());
         }
     }
 
+    /**
+	   * establishes the connection to the server.
+	   * @param nothing.
+	   * @return nothing.
+	   */
     private void connectServer(){
         try{
             Registry registry = LocateRegistry.getRegistry(serverHost, port);
             IdServerInterface stub = (IdServerInterface) registry.lookup("IdServer");
             executeCommand(stub);
         } catch (Exception e){
-            e.printStackTrace();
+        	System.err.println("Failed to connect to the server: " + e.getStackTrace());
         }
     }
 
+    /**
+	   * generates the password hash.
+	   * @param password - the original password.
+	   * @return password hash.
+	   */
     private String getHash(String password)  {
         MessageDigest md;
         try{
@@ -171,6 +191,13 @@ public class IdClient {
         return hexString.toString();
     }
 
+    /**
+	   * executes the possible commands with server.
+	   * @param stub - IdServerInterface instance.
+	   * @return nothing.
+	   * @exception RemoteException
+	   * @see RemoteException
+	   */
     private void executeCommand(IdServerInterface stub) throws RemoteException{
         //createLoginName is saved so we need to create a user
         String serverResponse;
@@ -207,7 +234,7 @@ public class IdClient {
     }
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException {
-        System.out.println(System.getProperty("user.dir"));
+        //System.out.println(System.getProperty("user.dir"));
         System.setProperty("javax.net.ssl.trustStore", "security/Client_Truststore");
         System.setProperty("java.security.policy", "security/mysecurity.policy");
         System.setProperty("javax.net.ssl.trustStorePassword", "test123");
