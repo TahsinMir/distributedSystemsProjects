@@ -12,3 +12,4 @@ client:
 clean:
 	mvn clean
 	rm -rf target
+	rm -rf userinfo.db
