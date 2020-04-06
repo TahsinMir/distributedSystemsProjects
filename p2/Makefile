@@ -3,10 +3,10 @@ all:
 	mvn compile
 	mvn package
 
-server:
+idserver:
 	java -jar target/IdServer.jar ${ARGS}
 
-client:
+idclient:
 	java -jar target/IdClient.jar ${ARGS}
 
 clean:
