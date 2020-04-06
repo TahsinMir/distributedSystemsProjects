@@ -433,7 +433,7 @@ public class Database
 			
 			if(!result.next())
 			{
-				log.warning(Constants.userNotFound + Constants.space + Constants.during + Constants.space + Constants.passwordChange);
+				log.warning(Constants.userNotFound + Constants.space + Constants.during + Constants.space + Constants.checkPassword);
 				return false;
 			}
 			
