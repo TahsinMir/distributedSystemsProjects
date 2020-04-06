@@ -23,12 +23,12 @@ In this assignment, we implemented a RMI based identity server. The client can c
 Run the following command to compile the project:  
  $ make  
 Run the following command to start the ChatServer:  
- $ java ChatServer --numport <port#> --verbose <verboseLevel#>  
+ $ make server
 You can use any free port available in the machine. For example `5005`. verbose should take value either `0/1`.
 If it's set to `0` then server won't show any log messages. But if it's set to `1` then server will show the log messages.
 
 The IdClient uses command line to connect to the IdServer, does one operation and then quits. We can run the IdClient by running:
- $ java IdClient --server <serverhost> [--numport <port#>] <query>
+ $ make client ARGS=" --server <serverhost> [--numport <port#>] <query>"
 
 Here <query> is the command line query that the IdClient want to execute. It must support at least six types of command line queries as follows:
 	--create <loginname> [<real name>] [--password <password>]

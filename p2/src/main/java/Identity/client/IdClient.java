@@ -53,8 +53,8 @@ public class IdClient {
     public static Options makeOption(){
         Options options = new Options();
         //Adding the command line options
-        options.addRequiredOption("s", "server", true, "The name of the server host");
-        options.addRequiredOption("n", "numport", true, "The port to be connected with the server");
+        options.addOption("s", "server", true, "The name of the server host");
+        options.addOption("n", "numport", true, "The port to be connected with the server");
 
         options.addOption("p", "password", true, "Password for the user");
         options.addOption("l", "lookup", true, "look up for user using the userName");
