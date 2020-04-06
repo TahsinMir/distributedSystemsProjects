@@ -4,10 +4,7 @@ all:
 	mvn package
 
 server:
-	java -jar target/IdServer.jar
-
-debug:
-	java -jar target/IdServer.jar --verbose --numport ${ARGS}
+	java -jar target/IdServer.jar ${ARGS}
 
 client:
 	java -jar target/IdClient.jar ${ARGS}
