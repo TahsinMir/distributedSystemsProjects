@@ -55,7 +55,7 @@ Run the following command to remove the compiled file from the directory:
  `$ make clean`  
 
 ## Testing
-No unit test or integration test was written for this project. However, every scenario was examined manually.
+Every scenario was examined manually.
 Some of the scenarios that we checked are:
 - The SSL was tested by providing the wrong password for the javax.net.ssl.trustStorePassword and also by changing the 
   valid certificate as expected the server didn't work either of the cases.
@@ -64,14 +64,18 @@ Some of the scenarios that we checked are:
 - Reverse lookup was checked with valid uuid, invalid uuid and after server close and re-run.
 - Modify was checked with valid and invalid password.
 - Delete command was tested for both with password, without password and with wrong password.
-- Get was check with all posssible types.
+- Get was check with all possible types.
 
 ## Reflection and Self Assessment
 Remote Method Invocation in java is much easier to work with than using TCP or UDP protocol. It seems like using or running
 the command in the same machine. After registering the RMI and running the server it never felt like we are calling the
 method from a different machine. The overall project was pretty easy to implement. The Server writes Client data 
 into a Hashtable as well as on the database. So even if the server is shutdown, it can always get the data from the database.
-Therefore server crash won't be a big deal for this case.
+Therefore server crash won't be a big deal for this case. The password was encrypted using the SHA256 hash. SSL was 
+implemented. All the databases and hashtable access were done with thread safety. Before shutdown (Ctrl-C)
+server makes sure to store all it's information to the database.
+
+
 Both Golam and Tahsin contributed equally for this project. Following is their specific contributions:
-Golam: Implemnted RMI with SSL certificate, client method on client side, Command line argument parser, result object(user).
+Golam: Implemnted RMI with SSL certificate, implement SHA256 for password, client method on client side, Command line argument parser, result object(user).
 Tahsin: Handle client request on server side, data storage in memory and disk(sqlite), testing, modify result object(user) to align with database.

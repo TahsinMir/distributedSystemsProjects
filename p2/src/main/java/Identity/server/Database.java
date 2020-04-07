@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 /***
  * Represents the database
  */
-public class Database
+public class Database extends Thread
 {
 	private	Hashtable<String, String> Users;  // login-name, uuid
 	private Hashtable<String, User> UserInfo;	// uuid, all-user-information
@@ -67,7 +67,7 @@ public class Database
 	   * @param lastChangeDate - the last date when the user data is changed
 	   * @return A string explaining the result of the user insertion operation.
 	   */
-	public String Insert(String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate)
+	public synchronized String Insert(String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate)
 	{
 		//first we check whether information about the same loginName or UUID already exists in the HashMap
 		if(Users.containsKey(loginName) || UserInfo.containsKey(uuid))
@@ -133,7 +133,7 @@ public class Database
 	   * @param value - the value of the key type to be used to delete the user.
 	   * @return A string explaining the result of the user deletion operation.
 	   */
-	public String Delete(String key, String value)
+	public synchronized String Delete(String key, String value)
 	{
 		if(!(key.equals(Constants.loginName) || key.equals(Constants.uuid)))
 		{
@@ -298,7 +298,7 @@ public class Database
 	   * @param changeValue - the value of the change type field to be used to update the user.
 	   * @return A string explaining the result of the user update operation..
 	   */
-	public String Update(String keyType, String keyValue, String changeType, String changeValue)
+	public synchronized String Update(String keyType, String keyValue, String changeType, String changeValue)
 	{
 		// check key compatibility
 		if(!(keyType.equals(Constants.loginName) || keyType.equals(Constants.uuid)))
