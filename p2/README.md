@@ -30,9 +30,8 @@ server periodically saves its state on to the disk so that it can survive crashe
 Run the following command to compile the project:  
  `$ make`  
 Run the following command to start the IdServer:  
- `$ make idserver ARGS="--v -n 5179"`  
+ `$ make idserver ARGS="-v -n 5179"`  
 You can use any other free port available in the machine. For example `5005`. If verbose option is mentioned, the server will print all log messages.
-If it's set to `0` then server won't show any log messages. But if it's set to `1` then server will show the log messages.
 
 The IdClient uses command line to connect to the IdServer, does one operation and then quits. We can run the IdClient by running:  
  `$ make idclient ARGS=" --server <serverhost> [--numport <port#>] <query>"`
