@@ -1,16 +1,27 @@
 package Identity.server;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
+import java.sql.Time;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import org.apache.commons.cli.DefaultParser;
@@ -19,6 +30,8 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
+
+
 import org.apache.commons.cli.Option;
 
 import javax.rmi.ssl.SslRMIClientSocketFactory;
@@ -35,6 +48,12 @@ public class IdServer implements IdServerInterface{
 	private int ServerPort = 5099;
 	private boolean isVerbose = false;
 	private Logger log;
+	private UUID serverUUID;
+	private UUID coordinatorUUID;
+	/*private boolean isCoordinator;
+	private boolean isCoordinatorElected;*/
+	private CommunicationMode serverCommunicationMode;
+	private int electionCounter;
 
 	/**
 	   * creates a new user.
@@ -190,6 +209,15 @@ public class IdServer implements IdServerInterface{
     	}
 		
 		extractOption(makeOption(), args);
+		
+		this.serverUUID = UUID.randomUUID();
+		/*this.isCoordinator = false;
+		this.isCoordinatorElected = false;*/
+		this.coordinatorUUID = null;
+		this.serverCommunicationMode = CommunicationMode.ELECTION_REQUIRED;
+		this.electionCounter = 0;
+		
+		System.out.println("my id: " + this.serverUUID.toString());
     }
 
 	public static Options makeOption(){
@@ -251,9 +279,17 @@ public class IdServer implements IdServerInterface{
 		System.setProperty("javax.net.ssl.keyStorePassword", "test123");
 		System.setProperty("java.security.policy", "security/mysecurity.policy");
 
-
+		
 		IdServer server = new IdServer(args);
+		
+		Thread t = new Thread(new CheckServersThread(5005, "239.255.255.254", server.GetServerUUID(), server));
+		t.start();
+		
+		Thread t2 = new Thread(new SendStatusToOtherServersThread(5005, "239.255.255.254", server.GetServerUUID(), server));
+		t2.start();
+		
 		server.bind();
+		
 		
 		//Adding shut down hook
 		Runtime.getRuntime().addShutdownHook(new Thread()
@@ -278,4 +314,322 @@ public class IdServer implements IdServerInterface{
     	this.log.info("Closing db connection ...");
     	db.CloseDB();
     }
+    
+    public UUID GetServerUUID()
+    {
+    	return this.serverUUID;
+    }
+    
+    public UUID GetCoordinatorUUID()
+    {
+    	return this.coordinatorUUID;
+    }
+    public void SetCoordinatorUUID(UUID coordinatorUUID)
+    {
+    	this.coordinatorUUID = coordinatorUUID;
+    }
+    
+    /*public boolean GetIsCoordinator()
+    {
+    	return this.isCoordinator;
+    }
+    public void SetIsCoordinator(boolean isCoordinator)
+    {
+    	this.isCoordinator = isCoordinator;
+    }
+    
+    public boolean GetIsCoordinatorElected()
+    {
+    	return this.isCoordinatorElected;
+    }
+    public void SetIsCoordinatorElected(boolean isCoordinatorElected)
+    {
+    	this.isCoordinatorElected = isCoordinatorElected;
+    }*/
+    
+    public CommunicationMode GetCommunicationMode()
+    {
+    	return this.serverCommunicationMode;
+    }
+    public void SetCommunicationMode(CommunicationMode communicationMode)
+    {
+    	this.serverCommunicationMode = communicationMode;
+    }
+    
+    public int GetElectionCounter()
+    {
+    	return this.electionCounter;
+    }
+    public void SetElectionCounter(int electionCounter)
+    {
+    	this.electionCounter = electionCounter;
+    }
+}
+
+class CheckServersThread implements Runnable
+{
+	private int port;
+	private MulticastSocket socket;
+	private InetAddress group;
+	private int MAX_LEN = 1000;
+	private UUID serverUUID;
+	private IdServer idServer;
+	private Timer timer = null;
+	private TimerTask timerTask = null;
+	private LocalDateTime LastTimeCoordinatorResponded;
+	
+	CheckServersThread(int port, String group, UUID serverUUID, IdServer idServer)
+	{
+		this.port = port;
+		try
+		{
+			this.group = InetAddress.getByName(group);
+		}
+		catch (UnknownHostException e)
+		{
+			System.out.println("UnknownHostException during parsing group address");
+			e.printStackTrace();
+		}
+		
+		this.createMulticastConenction();
+		
+		this.serverUUID = serverUUID;
+		this.idServer = idServer;
+		this.LastTimeCoordinatorResponded = null;
+	}
+	
+	private void createMulticastConenction()
+	{
+		try
+		{
+			socket = new MulticastSocket(port);
+			socket.setTimeToLive(0);
+			socket.joinGroup(group);
+		}
+		catch (IOException e)
+		{
+			System.out.println("IOException during socket intialization");
+			e.printStackTrace();
+		}
+	}
+	
+	public void run()
+	{
+		byte[] buffer = new byte[this.MAX_LEN];
+		DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, this.group, this.port);
+		String message;
+		
+		while(true)
+		{
+			try
+			{
+				socket.receive(datagram);
+				
+				message = new String(buffer, 0, datagram.getLength(), "UTF-8");
+				System.out.println("receiving message: " + message);
+				
+				String[] splitted = message.split("\\s+");
+				
+				String command = splitted[0];
+				String tempCoordUUID = splitted[1];
+				
+				if(command.equals(Constants.doElection))
+				{
+					System.out.println("ping received to execute election");
+					//doElection uuid
+					if(this.idServer.GetCoordinatorUUID() == null)
+					{
+						this.idServer.SetCoordinatorUUID(UUID.fromString(tempCoordUUID));
+					}
+					else if(this.idServer.GetCoordinatorUUID().toString().compareTo(tempCoordUUID) <= 0)
+					{
+						System.out.println("value: " + this.idServer.GetCoordinatorUUID().toString() + " being replaced with: " +tempCoordUUID);
+						this.idServer.SetCoordinatorUUID(UUID.fromString(tempCoordUUID));
+					}
+					this.idServer.SetCommunicationMode(CommunicationMode.ELECTION_RUNNING);
+					this.idServer.SetElectionCounter(0);
+				}
+				else if(command.equals(Constants.keepRunningElection))
+				{
+					if(this.idServer.GetCoordinatorUUID() == null)
+					{
+						System.out.println("coord UUID being changed...1");
+						this.idServer.SetCoordinatorUUID(UUID.fromString(tempCoordUUID));
+					}
+					else if(this.idServer.GetCoordinatorUUID().toString().compareTo(tempCoordUUID) <= 0)
+					{
+						System.out.println("coord UUID being changed...2");
+						System.out.println("value: " + this.idServer.GetCoordinatorUUID().toString() + " being replaced with: " +tempCoordUUID);
+						this.idServer.SetCoordinatorUUID(UUID.fromString(tempCoordUUID));
+					}
+					this.idServer.SetElectionCounter(this.idServer.GetElectionCounter() + 1);
+					
+					System.out.println("election running with counter: " + this.idServer.GetElectionCounter());
+					
+					//check limit to stop the election
+					if(this.idServer.GetElectionCounter() >= Constants.limit)
+					{
+						this.idServer.SetCommunicationMode(CommunicationMode.COORDINATOR_ELECTED);
+						this.idServer.SetElectionCounter(0);
+						
+						System.out.println("coordinator elected: " + this.idServer.GetCoordinatorUUID());
+					}
+				}
+				else if(command.equals(Constants.iAmHere))
+				{
+					//do nothing, just another server pinging
+				}
+				else if(command.equals(Constants.iAmCoordinator))
+				{
+					this.LastTimeCoordinatorResponded = LocalDateTime.now();
+					if(timer != null)
+					{
+						timer = null;
+						timerTask = null;
+					}
+					
+					timer = new Timer();
+					timerTask = new ExecuteTimer(this);
+					timer.scheduleAtFixedRate(timerTask, 7000, 7000);
+				}				
+			}
+			catch(IOException e)
+			{
+				System.out.println("IOException during receiving servers activity");
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	public LocalDateTime GetLastCoordinatorMessageTime()
+	{
+		return this.LastTimeCoordinatorResponded;
+	}
+	public void SetCoordinatorUUIDToNull()
+	{
+		this.idServer.SetCoordinatorUUID(null);
+		this.idServer.SetCommunicationMode(CommunicationMode.ELECTION_REQUIRED);
+	}
+}
+
+class SendStatusToOtherServersThread implements Runnable
+{
+	private int port;
+	private MulticastSocket socket;
+	private InetAddress group;
+	private UUID serverUUID;
+	private IdServer idServer;
+	
+	SendStatusToOtherServersThread(int port, String group, UUID serverUUID, IdServer idServer)
+	{
+		this.port = port;
+		try
+		{
+			this.group = InetAddress.getByName(group);
+		}
+		catch (UnknownHostException e)
+		{
+			System.out.println("UnknownHostException during parsing group address");
+			e.printStackTrace();
+		}
+		
+		this.createMulticastConenction();
+		
+		this.serverUUID = serverUUID;
+		this.idServer = idServer;
+	}
+	private void createMulticastConenction()
+	{
+		try
+		{
+			socket = new MulticastSocket(port);
+			socket.setTimeToLive(0);
+			socket.joinGroup(group);
+		}
+		catch (IOException e)
+		{
+			System.out.println("IOException during socket intialization");
+			e.printStackTrace();
+		}
+	}
+	
+	public void run()
+	{
+		//String message = "I am alive server_no: " + this.serverUUID.toString();
+		
+		while(true)
+		{
+			String message = null;
+			UUID myCoordUUID = this.idServer.GetCoordinatorUUID();
+			if(myCoordUUID == null)
+			{
+				message = Constants.doElection + Constants.space + this.serverUUID.toString();
+			}
+			else if(this.idServer.GetCommunicationMode() == CommunicationMode.ELECTION_REQUIRED)
+			{
+				message = Constants.doElection + Constants.space + this.serverUUID.toString();
+			}
+			else if(this.idServer.GetCommunicationMode() == CommunicationMode.ELECTION_RUNNING)
+			{
+				message = Constants.keepRunningElection + Constants.space + this.serverUUID.toString();
+			}
+			else if(this.idServer.GetCommunicationMode() == CommunicationMode.COORDINATOR_ELECTED)
+			{
+				if(this.idServer.GetServerUUID().toString().compareTo(this.idServer.GetCoordinatorUUID().toString()) == 0)
+				{
+					message = Constants.iAmCoordinator + Constants.space + this.serverUUID.toString();
+				}
+				else
+				{
+					message = Constants.iAmHere + Constants.space + this.serverUUID.toString();
+				}
+			}
+			try
+			{
+				byte[] buffer = message.getBytes();
+				DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, group, port);
+				socket.send(datagram);
+				Thread.sleep(3000);
+			}
+			catch(IOException e)
+			{
+				System.out.println("IOException during receiving servers activity");
+				e.printStackTrace();
+			}
+			catch(InterruptedException e)
+			{
+				System.out.println("InterruptedException during receiving servers activity");
+				e.printStackTrace();
+			}
+		}
+	}
+}
+
+class ExecuteTimer extends TimerTask
+{
+	CheckServersThread checkServersThread;
+	public ExecuteTimer(CheckServersThread checkServersThread)
+	{
+		this.checkServersThread = checkServersThread;
+	}
+	public void run()
+	{
+		LocalDateTime timeNow = LocalDateTime.now();
+		LocalDateTime lastContactTimeWithCoordinator = this.checkServersThread.GetLastCoordinatorMessageTime();
+		long difference = 0;
+		if(timeNow.compareTo(lastContactTimeWithCoordinator) > 0)
+		{
+			difference = timeNow.until(lastContactTimeWithCoordinator, ChronoUnit.SECONDS);
+		}
+		else
+		{
+			difference = lastContactTimeWithCoordinator.until(timeNow, ChronoUnit.SECONDS);
+		}
+		
+		if(difference > 5)	//seconds
+		{
+			System.out.println("No response from coordinator for: " + difference);
+			this.checkServersThread.SetCoordinatorUUIDToNull();
+		}
+	}
 }

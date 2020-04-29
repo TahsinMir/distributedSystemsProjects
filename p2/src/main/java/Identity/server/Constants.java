@@ -62,4 +62,14 @@ public class Constants
 	public static String users = "users";
 	public static String uuids = "uuids";
 	public static String all = "all";
+	
+	//election algorithm
+	public static String iAmHere = "i-am-here";
+	public static String iAmCoordinator = "i-am-coordinator";
+	public static String doElection = "do-election";
+	public static String keepRunningElection = "keep-running-election";
+	public static String True = "true";
+	public static String False = "false";
+	public static String nullValue = "NULL";
+	public static int limit = 5;
 }
