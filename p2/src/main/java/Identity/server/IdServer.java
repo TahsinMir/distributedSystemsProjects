@@ -403,7 +403,7 @@ class CheckServersThread implements Runnable
 		try
 		{
 			socket = new MulticastSocket(port);
-			socket.setTimeToLive(0);
+			socket.setTimeToLive(5);
 			socket.joinGroup(group);
 		}
 		catch (IOException e)
@@ -543,7 +543,7 @@ class SendStatusToOtherServersThread implements Runnable
 		try
 		{
 			socket = new MulticastSocket(port);
-			socket.setTimeToLive(0);
+			socket.setTimeToLive(5);
 			socket.joinGroup(group);
 		}
 		catch (IOException e)
