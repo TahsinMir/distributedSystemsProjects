@@ -435,6 +435,20 @@ class CheckServersThread implements Runnable
 				
 				if(command.equals(Constants.doElection))
 				{
+					//
+					//
+					this.LastTimeCoordinatorResponded = LocalDateTime.now();
+					if(timer != null)
+					{
+						timer = null;
+						timerTask = null;
+					}
+					
+					timer = new Timer();
+					timerTask = new ExecuteTimer(this);
+					timer.scheduleAtFixedRate(timerTask, 7000, 7000);
+					//
+					//
 					System.out.println("ping received to execute election");
 					//doElection uuid
 					if(this.idServer.GetCoordinatorUUID() == null)
@@ -451,6 +465,20 @@ class CheckServersThread implements Runnable
 				}
 				else if(command.equals(Constants.keepRunningElection))
 				{
+					//
+					//
+					this.LastTimeCoordinatorResponded = LocalDateTime.now();
+					if(timer != null)
+					{
+						timer = null;
+						timerTask = null;
+					}
+					
+					timer = new Timer();
+					timerTask = new ExecuteTimer(this);
+					timer.scheduleAtFixedRate(timerTask, 7000, 7000);
+					//
+					//
 					if(this.idServer.GetCoordinatorUUID() == null)
 					{
 						System.out.println("coord UUID being changed...1");
@@ -619,13 +647,9 @@ class ExecuteTimer extends TimerTask
 		long difference = 0;
 		if(timeNow.compareTo(lastContactTimeWithCoordinator) > 0)
 		{
-			difference = timeNow.until(lastContactTimeWithCoordinator, ChronoUnit.SECONDS);
+			difference = Math.abs(timeNow.until(lastContactTimeWithCoordinator, ChronoUnit.SECONDS));
 		}
-		else
-		{
-			difference = lastContactTimeWithCoordinator.until(timeNow, ChronoUnit.SECONDS);
-		}
-		
+		//System.out.println("No response from coordinator for: " + difference);
 		if(difference > 5)	//seconds
 		{
 			System.out.println("No response from coordinator for: " + difference);
