@@ -282,10 +282,10 @@ public class IdServer implements IdServerInterface{
 		
 		IdServer server = new IdServer(args);
 		
-		Thread t = new Thread(new CheckServersThread(5005, "239.255.255.254", server.GetServerUUID(), server));
+		Thread t = new Thread(new CheckServersThread(5176, "230.230.246.1", server.GetServerUUID(), server));
 		t.start();
 		
-		Thread t2 = new Thread(new SendStatusToOtherServersThread(5005, "239.255.255.254", server.GetServerUUID(), server));
+		Thread t2 = new Thread(new SendStatusToOtherServersThread(5176, "230.230.246.1", server.GetServerUUID(), server));
 		t2.start();
 		
 		server.bind();
