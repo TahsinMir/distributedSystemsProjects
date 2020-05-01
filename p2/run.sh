@@ -1,0 +1,1 @@
+java -jar /p2/target/IdServer.jar -v -n 5005
