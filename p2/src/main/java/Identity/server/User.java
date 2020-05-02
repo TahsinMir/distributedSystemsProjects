@@ -18,6 +18,7 @@ public class User implements Serializable {
     private String modificationMessage;
     // we will not pass this data during serialization so it's transient
     private transient String passHash; // Most probabably we will not need it will remove in future
+    private int lamport;
 
     public User(){
 
@@ -35,7 +36,7 @@ public class User implements Serializable {
         this.modificationMessage = modificationMessage;
     }
     
-    public User(String loginName, UUID uuid, String passwordHash, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate)
+    public User(String loginName, UUID uuid, String passwordHash, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate, int lamport)
     {
     	this.loginName = loginName;
         this.uuid = uuid;
@@ -45,6 +46,7 @@ public class User implements Serializable {
         this.createdTime = createdTime;
         this.realName = realName;
         this.lastChangeDate = lastChangeDate;
+        this.lamport = lamport;
     }
     
     public User(String modificationMessage)
@@ -136,6 +138,16 @@ public class User implements Serializable {
     public void setModificationMessage(String modificationMessage)
     {
     	this.modificationMessage = modificationMessage;
+    }
+    
+    public int getLamport()
+    {
+    	return this.lamport;
+    }
+    
+    public void setLamport(int lamport)
+    {
+    	this.lamport = lamport;
     }
 
     public String toString()

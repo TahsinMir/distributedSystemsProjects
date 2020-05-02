@@ -53,6 +53,7 @@ public class IdServer implements IdServerInterface{
 	/*private boolean isCoordinator;
 	private boolean isCoordinatorElected;*/
 	private CommunicationMode serverCommunicationMode;
+	private int lamportTime = 0;	//TODO: set to 0 initially for testing
 	private int electionCounter;
 
 	/**
@@ -81,7 +82,7 @@ public class IdServer implements IdServerInterface{
    		String timeNowString = timeNow.toString();
    		
    		//String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate
-    	insertionResult = db.Insert(LoginName, uuid, password, ipAddress, dateNowString, timeNowString, realName, dateNowString);
+    	insertionResult = db.Insert(LoginName, uuid, password, ipAddress, dateNowString, timeNowString, realName, dateNowString, lamportTime++);
     	
     	return insertionResult;
     }
@@ -141,7 +142,7 @@ public class IdServer implements IdServerInterface{
     		return Constants.failure + Constants.colon + Constants.wrongPassword;
     	}
     	
-    	String resultUpdate = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName);
+    	String resultUpdate = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName, lamportTime++);
     	
     	if(resultUpdate.startsWith(Constants.failure))
     	{
@@ -150,7 +151,7 @@ public class IdServer implements IdServerInterface{
     	
     	LocalDate dateNow = LocalDate.now();
    		String dateNowString = dateNow.toString();
-    	String resultUpdateLastChange = db.Update(Constants.loginName, newLoginName, Constants.lastChangeDate, dateNowString);
+    	String resultUpdateLastChange = db.Update(Constants.loginName, newLoginName, Constants.lastChangeDate, dateNowString, lamportTime++);
     	
     	return resultUpdateLastChange;
     }
