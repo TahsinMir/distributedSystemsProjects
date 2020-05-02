@@ -219,6 +219,8 @@ public class IdServer implements IdServerInterface{
 		this.electionCounter = 0;
 		
 		System.out.println("my id: " + this.serverUUID.toString());
+		
+		this.geMostRecentLamport();
     }
 
 	public static Options makeOption(){
@@ -364,6 +366,17 @@ public class IdServer implements IdServerInterface{
     public void SetElectionCounter(int electionCounter)
     {
     	this.electionCounter = electionCounter;
+    }
+    
+    private void geMostRecentLamport()
+    {
+    	if(db == null)
+    	{
+    		db = new Database(log);
+    	}
+    	
+    	this.lamportTime = db.InitializeLamport();
+    	log.info("most recent lamport value: " + this.lamportTime);
     }
 }
 

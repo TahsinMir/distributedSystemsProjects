@@ -651,4 +651,39 @@ public class Database extends Thread
 			}
 	    }
 	}
+	public int InitializeLamport()
+	{
+		try
+		{
+			ResultSet checkExist = statement.executeQuery("select MAX(lamporttime) AS max_lamport from user;");
+			
+			int result = 0;
+			int counter = 0;
+			while(checkExist.next())
+			{
+				counter++;
+				
+				if(counter == 1)
+				{
+					String resultStr = checkExist.getString("max_lamport");
+					if(resultStr == null)
+					{
+						result = 0;
+					}
+					else
+					{
+						result = Integer.parseInt(resultStr);
+					}
+				}
+			}
+			
+			return result;
+		}
+		catch (SQLException e)
+		{
+			log.warning("SQLException occusred diring lamport value retrieval");
+			e.printStackTrace();
+			return 0;
+		}
+	}
 }
