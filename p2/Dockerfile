@@ -16,6 +16,6 @@ COPY . /p2
 
 #RUN (make)
 
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["/bin/bash", "/p2/run.sh"]
 # Install the ls program
 

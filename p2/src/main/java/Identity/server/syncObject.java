@@ -25,6 +25,7 @@ public class syncObject implements Serializable {
     private boolean amICoordinator = false;
 
     public syncObject(int myPort, String myAddress, UUID myUUID){
+        lampHistory = new HashMap<>();
         this.myPort = myPort;
         this.myAddress = myAddress;
         this.myUUID = myUUID;

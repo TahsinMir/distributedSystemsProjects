@@ -5,6 +5,8 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -284,10 +286,9 @@ public class IdServer implements IdServerInterface {
     }
 
     public static void main(String args[]) throws RemoteException {
-        System.setProperty("javax.net.ssl.keyStore", "security/Server_Keystore");
+        System.setProperty("javax.net.ssl.keyStore", "/p2/src/main/resources/security/Server_Keystore");
+        System.setProperty("java.security.policy", "/p2/src/main/resources/security/mysecurity.policy");
         System.setProperty("javax.net.ssl.keyStorePassword", "test123");
-        System.setProperty("java.security.policy", "security/mysecurity.policy");
-
 
         IdServer server = new IdServer(args);
         server.bind();
