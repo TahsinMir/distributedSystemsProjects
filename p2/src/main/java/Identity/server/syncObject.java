@@ -59,7 +59,7 @@ public class syncObject implements Serializable {
 
     public void unsetCoordinator(){
         setMyselfasCoordinator(); // Temporarily I am setting myself as coordinator
-        this.message = "No coordinaotr is selected yet. Election required";
+        this.message = "No coordinator is selected yet. Election required";
         this.commMode = CommunicationMode.ELECTION_REQUIRED;
     }
 

@@ -13,7 +13,9 @@ import org.apache.commons.cli.Option;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -49,7 +51,7 @@ public class IdClient {
 
     /**
 	   * makes all the option for command line.
-	   * @param nothing.
+	   * @param
 	   * @return An Option instance.
 	   */
     public static Options makeOption(){
@@ -96,7 +98,7 @@ public class IdClient {
             if(cmd.hasOption("server-list")){
                 serverList = cmd.getOptionValue("server-list");
             }else{
-                serverList = "serverList.txt";
+                serverList = "/p2/serverList.txt";
             }
 
             if(cmd.hasOption("password")){
@@ -169,12 +171,13 @@ public class IdClient {
                     Registry registry = LocateRegistry.getRegistry(serverAddress, serverPort);
                     IdServerInterface stub = (IdServerInterface) registry.lookup("IdServer");
                     executeCommand(stub);
-                    break;
+                    return;
                 } catch (Exception e){
-                    System.err.println("Failed to connect to the server: " + e.getStackTrace());
-                    e.printStackTrace();
+                    System.err.println("Failed to connect to the server: " + serverAddress +":"+serverPort);
+                    System.out.println("Trying the next server in the list");
                 }
             }
+            System.out.println("No server is alive");
 
 
         } catch (FileNotFoundException e){
@@ -219,7 +222,7 @@ public class IdClient {
         //createLoginName is saved so we need to create a user
         String serverResponse;
         if (createLoginName != null){
-            serverResponse = stub.create(createLoginName, realName, getHash(password), serverList);
+            serverResponse = stub.create(createLoginName, realName, getHash(password), getMyaddress());
             System.out.println(serverResponse);
         }
         if (lookUpQuery != null){
@@ -248,6 +251,14 @@ public class IdClient {
             ServerResponses.forEach(System.out::println);
         }
 
+    }
+
+    public String getMyaddress(){
+        try{
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e){
+            return "No host address";
+        }
     }
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException {

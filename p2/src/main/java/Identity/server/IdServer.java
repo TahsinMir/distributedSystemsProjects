@@ -319,6 +319,7 @@ public class IdServer implements IdServerInterface {
     public IdServerInterface getCoordinatorStub(){
         IdServerInterface stub;
         try{
+            System.out.println("Coordinator address is: " + sync.getCoordinatorAddress() +" Port is : "+ sync.getCoordinatorPort());
             Registry registry = LocateRegistry.getRegistry(sync.getCoordinatorAddress(), sync.getCoordinatorPort());
             stub = (IdServerInterface) registry.lookup("IdServer");
         } catch (Exception e){
@@ -339,6 +340,8 @@ public class IdServer implements IdServerInterface {
         System.setProperty("javax.net.ssl.keyStore", "/p2/security/Server_Keystore");
         System.setProperty("java.security.policy", "/p2/security/mysecurity.policy");
         System.setProperty("javax.net.ssl.keyStorePassword", "test123");
+        System.setProperty("javax.net.ssl.trustStore", "/p2/security/Client_Truststore"); // The server will also work as an client. During invoking the coordinator method
+        System.setProperty("javax.net.ssl.trustStorePassword", "test123");
 
         IdServer server = new IdServer(args);
         server.bind();
@@ -462,7 +465,7 @@ class CheckServersThread implements Runnable {
                     } else if (idServer.getSync().getMyUUID().toString().compareTo(receivedSyncObj.getCoordinatorUUID().toString()) <= 0) { // if coordinator is already save then I will compare my UUID with his UUID
                         // Co ordinator is changed so I will change myself accordingly
                         idServer.getSync().updateCoordinator(receivedSyncObj);
-                        System.out.println(idServer.getSync().getMessage());
+                        idServer.getLog().info(idServer.getSync().getMessage());
                     }
                     idServer.getSync().setCommMode(CommunicationMode.ELECTION_RUNNING);
                     this.idServer.SetElectionCounter(0);
@@ -517,7 +520,7 @@ class CheckServersThread implements Runnable {
             } catch (IOException e) {
                 idServer.getLog().warning("IOException during receiving servers activity");
             } catch (ClassNotFoundException e){
-                idServer.getLog().warning("Couldn't convert the byte array stream to syncobject");
+                idServer.getLog().warning("Couldn't convert the byte array stream to sync object");
             }
 
         }
