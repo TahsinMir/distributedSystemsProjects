@@ -10,9 +10,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Option;
 
-import java.io.InputStream;
-import java.util.logging.Logger;
-
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
@@ -23,12 +22,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Scanner;
 
 /***
  * Represents the IdClient
  */
 public class IdClient {
-    private String serverHost;
+    private String serverList;
     private int port;
     private String createLoginName;
     private String realName;
@@ -55,8 +55,7 @@ public class IdClient {
     public static Options makeOption(){
         Options options = new Options();
         //Adding the command line options
-        options.addOption("s", "server", true, "The name of the server host");
-        options.addOption("n", "numport", true, "The port to be connected with the server");
+        options.addOption("sl", "server-list", true, "The name of the server host");
 
         options.addOption("p", "password", true, "Password for the user");
         options.addOption("l", "lookup", true, "look up for user using the userName");
@@ -94,12 +93,10 @@ public class IdClient {
                 formatter.printHelp("IdClient", options);
             }
 
-            if(cmd.hasOption("server") && cmd.hasOption("numport")){
-                serverHost = cmd.getOptionValue("server");
-                port = Integer.parseInt(cmd.getOptionValue("numport"));
+            if(cmd.hasOption("server-list")){
+                serverList = cmd.getOptionValue("server-list");
             }else{
-                System.err.println("Server host name and port is required");
-                System.exit(0);
+                serverList = "serverList.txt";
             }
 
             if(cmd.hasOption("password")){
@@ -155,18 +152,35 @@ public class IdClient {
 
     /**
 	   * establishes the connection to the server.
-	   * @param nothing.
+	   * @param
 	   * @return nothing.
 	   */
     private void connectServer(){
+//        Iter over the server list
         try{
-            Registry registry = LocateRegistry.getRegistry(serverHost, port);
-            IdServerInterface stub = (IdServerInterface) registry.lookup("IdServer");
-            executeCommand(stub);
-        } catch (Exception e){
-        	System.err.println("Failed to connect to the server: " + e.getStackTrace());
-        	e.printStackTrace();
+            File servers = new File(serverList);
+            Scanner serverReader = new Scanner(servers);
+            while(serverReader.hasNextLine()){
+                // Extract server port and address
+                String[] serverAddressWithPort = serverReader.nextLine().replace("\n", "").replace("\r", "").split(":");
+                String serverAddress = serverAddressWithPort[0];
+                int serverPort = Integer.parseInt(serverAddressWithPort[1]);
+                try{
+                    Registry registry = LocateRegistry.getRegistry(serverAddress, serverPort);
+                    IdServerInterface stub = (IdServerInterface) registry.lookup("IdServer");
+                    executeCommand(stub);
+                    break;
+                } catch (Exception e){
+                    System.err.println("Failed to connect to the server: " + e.getStackTrace());
+                    e.printStackTrace();
+                }
+            }
+
+
+        } catch (FileNotFoundException e){
+            System.err.println("Server list not found");
         }
+
     }
 
     /**
@@ -205,7 +219,7 @@ public class IdClient {
         //createLoginName is saved so we need to create a user
         String serverResponse;
         if (createLoginName != null){
-            serverResponse = stub.create(createLoginName, realName, getHash(password), serverHost);
+            serverResponse = stub.create(createLoginName, realName, getHash(password), serverList);
             System.out.println(serverResponse);
         }
         if (lookUpQuery != null){

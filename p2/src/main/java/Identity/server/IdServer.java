@@ -430,7 +430,7 @@ class CheckServersThread implements Runnable {
 
     public void run() {
         byte[] buffer = new byte[this.MAX_LEN];
-        // This dataagram will be syncObject
+        // This datagram will be syncObject
         DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, this.group, this.port);
 
         while (true) {
