@@ -43,11 +43,9 @@ public class IdServer implements IdServerInterface {
     private boolean isVerbose = false;
     private Logger log;
     private UUID serverUUID;
-    private UUID coordinatorUUID;
     /*private boolean isCoordinator;
     private boolean isCoordinatorElected;*/
     private CommunicationMode serverCommunicationMode;
-    private int lamportTime;
     private int electionCounter;
     private syncObject sync;
 
@@ -65,7 +63,6 @@ public class IdServer implements IdServerInterface {
 
 		/*this.isCoordinator = false;
 		this.isCoordinatorElected = false;*/
-        this.coordinatorUUID = null;
         this.serverCommunicationMode = CommunicationMode.ELECTION_REQUIRED;
         this.electionCounter = 0;
 
@@ -294,7 +291,7 @@ public class IdServer implements IdServerInterface {
             log.info("server is up and running on port " + registry);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Exception occurred: " + e);
+            log.info("Exception occurred: " + e);
         }
     }
 
@@ -331,6 +328,10 @@ public class IdServer implements IdServerInterface {
             stub = this;
         }
         return stub;
+    }
+
+    public Logger getLog(){
+        return log;
     }
 
     public static void main(String args[]) throws RemoteException {
@@ -408,12 +409,11 @@ class CheckServersThread implements Runnable {
         try {
             this.group = InetAddress.getByName(group);
         } catch (UnknownHostException e) {
-            System.out.println("UnknownHostException during parsing group address");
+
+            idServer.getLog().warning("UnknownHostException during parsing group address");
             e.printStackTrace();
         }
-
         this.createMulticastConenction();
-
         this.serverUUID = serverUUID;
         this.idServer = idServer;
         this.LastTimeCoordinatorResponded = null;
@@ -424,8 +424,7 @@ class CheckServersThread implements Runnable {
             socket = new MulticastSocket(port);
             socket.joinGroup(group);
         } catch (IOException e) {
-            System.out.println("IOException during socket intialization");
-            e.printStackTrace();
+            idServer.getLog().warning("IOException during socket initialization");
         }
     }
 
@@ -441,7 +440,7 @@ class CheckServersThread implements Runnable {
                 ObjectInput in = new ObjectInputStream(bis);
                 syncObject receivedSyncObj = (syncObject) in.readObject();
 
-                System.out.println("receiving message: " + receivedSyncObj.getMessage());
+                idServer.getLog().info("receiving message: " + receivedSyncObj.getMessage());
                 if (receivedSyncObj.getCommMode() == CommunicationMode.ELECTION_REQUIRED) {
                     this.LastTimeCoordinatorResponded = LocalDateTime.now();
 
@@ -455,7 +454,7 @@ class CheckServersThread implements Runnable {
                     timer.scheduleAtFixedRate(timerTask, 7000, 7000);
                     //
                     //
-                    System.out.println("ping received to execute election");
+                    idServer.getLog().info("ping received to execute election");
                     //doElection uuid
                     if (this.idServer.getSync().getCoordinatorUUID() == null) {
                         // If there is no coordinator then I will set myself as coordinator
@@ -478,30 +477,27 @@ class CheckServersThread implements Runnable {
                     timerTask = new ExecuteTimer(this);
                     timer.scheduleAtFixedRate(timerTask, 7000, 7000);
                     if (idServer.getSync().getCoordinatorUUID() == null) { // IF my coordinator information is set to null then I will update myself
-                        System.out.println("coord UUID being changed...1");
+                        idServer.getLog().info("coord UUID being changed...1");
                         this.idServer.getSync().setCoordinatorUUID(receivedSyncObj.getCoordinatorUUID());
                     } else if(idServer.getSync().getLampTime() > receivedSyncObj.getLampTime()){ // I have the highest lamport time so I will be coordinator.
                         idServer.getSync().setMyselfasCoordinator();
                     } else if(idServer.getSync().getLampTime() < receivedSyncObj.getLampTime()){ // sender has the highest lamport time so he will be the co ordinator
                         idServer.getSync().updateCoordinator(receivedSyncObj);
                     }else if (idServer.getSync().getCoordinatorUUID().toString().compareTo(receivedSyncObj.getCoordinatorUUID().toString()) <= 0) { // if lamport time is same  and if someone else has less UUID number then update myself and make him coordinator
-                        System.out.println("coord UUID being changed...2");
+                        idServer.getLog().info("coord UUID being changed...2");
                         this.idServer.getSync().setCoordinatorUUID(receivedSyncObj.getCoordinatorUUID());
                     }
                     this.idServer.SetElectionCounter(this.idServer.GetElectionCounter() + 1);
 
-                    System.out.println("election running with counter: " + this.idServer.GetElectionCounter());
+                    idServer.getLog().info("election running with counter: " + this.idServer.GetElectionCounter());
 
                     //check limit to stop the election
                     if (this.idServer.GetElectionCounter() >= Constants.limit) {
                         this.idServer.getSync().setCommMode(CommunicationMode.COORDINATOR_ELECTED);
                         this.idServer.SetElectionCounter(0);
 
-                        System.out.println("coordinator elected: " + this.idServer.getSync().getCoordinatorUUID().toString());
+                        idServer.getLog().info("coordinator elected: " + this.idServer.getSync().getCoordinatorUUID().toString());
                     }
-                } else if (!receivedSyncObj.isCoordinator()) {
-
-                    System.out.println("Message from regular server");
                 } else if (receivedSyncObj.isCoordinator()) {
                     this.LastTimeCoordinatorResponded = LocalDateTime.now();
                     if (timer != null) {
@@ -519,10 +515,9 @@ class CheckServersThread implements Runnable {
                     }
                 }
             } catch (IOException e) {
-                System.out.println("IOException during receiving servers activity");
-                e.printStackTrace();
+                idServer.getLog().warning("IOException during receiving servers activity");
             } catch (ClassNotFoundException e){
-                System.out.println("Couldn't convert the byte array stream to syncobject");
+                idServer.getLog().warning("Couldn't convert the byte array stream to syncobject");
             }
 
         }
@@ -549,8 +544,7 @@ class SendStatusToOtherServersThread implements Runnable {
         try {
             this.group = InetAddress.getByName(group);
         } catch (UnknownHostException e) {
-            System.out.println("UnknownHostException during parsing group address");
-            e.printStackTrace();
+            idServer.getLog().warning("UnkownHostException during parsing group address");
         }
 
         this.createMulticastConenction();
@@ -564,8 +558,7 @@ class SendStatusToOtherServersThread implements Runnable {
             socket = new MulticastSocket(port);
             socket.setTimeToLive(5);
         } catch (IOException e) {
-            System.out.println("IOException during socket intialization");
-            e.printStackTrace();
+            idServer.getLog().warning("IOException during socket initialization");
         }
     }
 
@@ -593,11 +586,9 @@ class SendStatusToOtherServersThread implements Runnable {
                 socket.send(datagram);
                 Thread.sleep(3000);
             } catch (IOException e) {
-                System.out.println("IOException during receiving servers activity");
-                e.printStackTrace();
+                idServer.getLog().warning("IOException during receiving server activity");
             } catch (InterruptedException e) {
-                System.out.println("InterruptedException during receiving servers activity");
-                e.printStackTrace();
+                idServer.getLog().warning("InterruptedException during receiving servers activity");
             }
         }
     }
