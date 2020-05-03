@@ -67,7 +67,7 @@ public class Database extends Thread
 	   * @param lastChangeDate - the last date when the user data is changed
 	   * @return A string explaining the result of the user insertion operation.
 	   */
-	public synchronized String Insert(String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate, int lamport)
+	public synchronized String Insert(String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate, int lamport, syncObject sync)
 	{
 		//first we check whether information about the same loginName or UUID already exists in the HashMap
 		if(Users.containsKey(loginName) || UserInfo.containsKey(uuid))
@@ -117,6 +117,7 @@ public class Database extends Thread
 		{
 			//inserting user data
 			statement.executeUpdate(query);
+			sync.insertHistory(lamport, query);
 			log.info(Constants.dataInserted + Constants.colon + loginName);
 			return Constants.success + Constants.colon + Constants.dataInserted + Constants.colon + loginName;
 		}
@@ -298,7 +299,7 @@ public class Database extends Thread
 	   * @param changeValue - the value of the change type field to be used to update the user.
 	   * @return A string explaining the result of the user update operation..
 	   */
-	public synchronized String Update(String keyType, String keyValue, String changeType, String changeValue, int lamport)
+	public synchronized String Update(String keyType, String keyValue, String changeType, String changeValue, int lamport, syncObject sync)
 	{
 		// check key compatibility
 		if(!(keyType.equals(Constants.loginName) || keyType.equals(Constants.uuid)))
@@ -339,49 +340,49 @@ public class Database extends Thread
 			
 			if(changeType.equals(Constants.loginName))
 			{
-				addResult = Insert(changeValue, uuid, password, ipAddress, date, time, realUserName, lastChangeDate, lamport);
+				addResult = Insert(changeValue, uuid, password, ipAddress, date, time, realUserName, lastChangeDate, lamport, sync);
 				Users.put(changeValue, uuid);
 				UserInfo.put(uuid, new User(changeValue, UUID.fromString(uuid), password, ipAddress, dateFormatter.parse(date), Time.valueOf(LocalTime.parse(time)), realUserName, dateFormatter.parse(lastChangeDate), lamport));
 			}
 			else if(changeType.equals(Constants.uuid))
 			{
-				addResult = Insert(loginName, changeValue, password, ipAddress, date, time, realUserName, lastChangeDate, lamport);
+				addResult = Insert(loginName, changeValue, password, ipAddress, date, time, realUserName, lastChangeDate, lamport, sync);
 				Users.put(loginName, changeValue);
 				UserInfo.put(changeValue, new User(loginName, UUID.fromString(changeValue), password, ipAddress, dateFormatter.parse(date), Time.valueOf(LocalTime.parse(time)), realUserName, dateFormatter.parse(lastChangeDate), lamport));
 			}
 			else if(changeType.equals(Constants.password))
 			{
-				addResult = Insert(loginName, uuid, changeValue, ipAddress, date, time, realUserName, lastChangeDate, lamport);
+				addResult = Insert(loginName, uuid, changeValue, ipAddress, date, time, realUserName, lastChangeDate, lamport, sync);
 				Users.put(loginName, uuid);
 				UserInfo.put(uuid, new User(loginName, UUID.fromString(uuid), changeValue, ipAddress, dateFormatter.parse(date), Time.valueOf(LocalTime.parse(time)), realUserName, dateFormatter.parse(lastChangeDate), lamport));
 			}
 			else if(changeType.equals(Constants.ipAddress))
 			{
-				addResult = Insert(loginName, uuid, password, changeValue, date, time, realUserName, lastChangeDate, lamport);
+				addResult = Insert(loginName, uuid, password, changeValue, date, time, realUserName, lastChangeDate, lamport, sync);
 				Users.put(loginName, uuid);
 				UserInfo.put(uuid, new User(loginName, UUID.fromString(uuid), password, changeValue, dateFormatter.parse(date), Time.valueOf(LocalTime.parse(time)), realUserName, dateFormatter.parse(lastChangeDate), lamport));
 			}
 			else if(changeType.equals(Constants.date))
 			{
-				addResult = Insert(loginName, uuid, password, ipAddress, changeValue, time, realUserName, lastChangeDate, lamport);
+				addResult = Insert(loginName, uuid, password, ipAddress, changeValue, time, realUserName, lastChangeDate, lamport, sync);
 				Users.put(loginName, uuid);
 				UserInfo.put(uuid, new User(loginName, UUID.fromString(uuid), password, ipAddress, dateFormatter.parse(changeValue), Time.valueOf(LocalTime.parse(time)), realUserName, dateFormatter.parse(lastChangeDate), lamport));
 			}
 			else if(changeType.equals(Constants.time))
 			{
-				addResult = Insert(loginName, uuid, password, ipAddress, date, changeValue, realUserName, lastChangeDate, lamport);
+				addResult = Insert(loginName, uuid, password, ipAddress, date, changeValue, realUserName, lastChangeDate, lamport, sync);
 				Users.put(loginName, uuid);
 				UserInfo.put(uuid, new User(loginName, UUID.fromString(uuid), password, ipAddress, dateFormatter.parse(date), Time.valueOf(LocalTime.parse(changeValue)), realUserName, dateFormatter.parse(lastChangeDate), lamport));
 			}
 			else if(changeType.equals(Constants.realUserName))
 			{
-				addResult = Insert(loginName, uuid, password, ipAddress, date, time, changeValue, lastChangeDate, lamport);
+				addResult = Insert(loginName, uuid, password, ipAddress, date, time, changeValue, lastChangeDate, lamport, sync);
 				Users.put(loginName, uuid);
 				UserInfo.put(uuid, new User(loginName, UUID.fromString(uuid), password, ipAddress, dateFormatter.parse(date), Time.valueOf(LocalTime.parse(time)), changeValue, dateFormatter.parse(lastChangeDate), lamport));
 			}
 			else if(changeType.equals(Constants.lastChangeDate))
 			{
-				addResult = Insert(loginName, uuid, password, ipAddress, date, time, realUserName, changeValue, lamport);
+				addResult = Insert(loginName, uuid, password, ipAddress, date, time, realUserName, changeValue, lamport, sync);
 				Users.put(loginName, uuid);
 				//String loginName, UUID uuid, String passwordHash, String creationIpAddress, Date createdDate, Time createdTime, String realName, Date lastChangeDate, int lamport
 				UserInfo.put(uuid, new User(loginName, UUID.fromString(uuid), password, ipAddress, dateFormatter.parse(date), Time.valueOf(LocalTime.parse(time)), realUserName, dateFormatter.parse(changeValue), lamport));
@@ -526,7 +527,7 @@ public class Database extends Thread
 	
 	/**
 	   * gets user list, not used by the server, used for testing purposes.
-	   * @param nothing.
+	   * @param
 	   * @return All information.
 	   */
 	public ResultSet GetAll()
@@ -546,7 +547,7 @@ public class Database extends Thread
 	
 	/**
 	   * closes the db connection.
-	   * @param nothing.
+	   * @param
 	   * @return A boolean value indicating the result of the db connection closing operation..
 	   */
 	public boolean CloseDB()
