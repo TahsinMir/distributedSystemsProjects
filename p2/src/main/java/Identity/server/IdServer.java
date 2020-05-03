@@ -335,8 +335,8 @@ public class IdServer implements IdServerInterface {
 
     public static void main(String args[]) throws RemoteException {
         System.setProperty("java.net.preferIPv4Stack", "true");
-        System.setProperty("javax.net.ssl.keyStore", "security/Server_Keystore");
-        System.setProperty("java.security.policy", "security/mysecurity.policy");
+        System.setProperty("javax.net.ssl.keyStore", "/p2/security/Server_Keystore");
+        System.setProperty("java.security.policy", "/p2/security/mysecurity.policy");
         System.setProperty("javax.net.ssl.keyStorePassword", "test123");
 
         IdServer server = new IdServer(args);
