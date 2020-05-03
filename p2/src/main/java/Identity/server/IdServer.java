@@ -1,10 +1,7 @@
 package Identity.server;
 
 import java.io.*;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
@@ -19,12 +16,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
+import java.util.*;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -80,9 +72,7 @@ public class IdServer implements IdServerInterface {
         // Create new syncObject
         // My address will be set later once i connected with the RMI registry
         sync = new syncObject(getServerPort(), null, this.serverUUID);
-        System.out.println("my id: " + this.serverUUID.toString());
-
-        this.lamportTime = db.InitializeLamport();
+        sync.setLampTime(db.InitializeLamport());
     }
 
     public syncObject getSync() {
@@ -101,6 +91,12 @@ public class IdServer implements IdServerInterface {
      * @see RemoteException
      */
     public String create(String LoginName, String realName, String password, String ipAddress) throws RemoteException {
+        // Only coordinator will update
+        // So other server will remotely invoke the coordinator method
+        if(!sync.isCoordinator()){
+            IdServerInterface coordinatorStub = getCoordinatorStub();
+            return coordinatorStub.create(LoginName, realName, password, ipAddress);
+        }
         if (db == null) {
             db = new Database(log);
         }
@@ -112,9 +108,9 @@ public class IdServer implements IdServerInterface {
         String dateNowString = dateNow.toString();
         LocalTime timeNow = LocalTime.now();
         String timeNowString = timeNow.toString();
-
+        sync.increaseLamportTime();
         //String loginName, String uuid, String password, String ipAddress, String date, String time, String realUserName, String lastChangeDate
-        insertionResult = db.Insert(LoginName, uuid, password, ipAddress, dateNowString, timeNowString, realName, dateNowString, lamportTime++, sync);
+        insertionResult = db.Insert(LoginName, uuid, password, ipAddress, dateNowString, timeNowString, realName, dateNowString, sync.getLampTime(), sync);
 
         return insertionResult;
     }
@@ -128,6 +124,10 @@ public class IdServer implements IdServerInterface {
      * @see RemoteException
      */
     public User lookup(String loginName) throws RemoteException {
+        if(!sync.isCoordinator()){
+            IdServerInterface coordinatorStub = getCoordinatorStub();
+            return coordinatorStub.lookup(loginName);
+        }
         if (db == null) {
             db = new Database(log);
         }
@@ -144,6 +144,10 @@ public class IdServer implements IdServerInterface {
      * @see RemoteException
      */
     public User reverseLookUp(String UUID) throws RemoteException {
+        if(!sync.isCoordinator()){
+            IdServerInterface coordinatorStub = getCoordinatorStub();
+            return coordinatorStub.reverseLookUp(UUID);
+        }
         if (db == null) {
             db = new Database(log);
         }
@@ -162,6 +166,11 @@ public class IdServer implements IdServerInterface {
      * @see RemoteException
      */
     public String modify(String oldLoginName, String newLoginName, String password) throws RemoteException {
+
+        if(!sync.isCoordinator()){
+            IdServerInterface coordinatorStub = getCoordinatorStub();
+            return coordinatorStub.modify(oldLoginName,newLoginName,password);
+        }
         if (db == null) {
             db = new Database(log);
         }
@@ -169,8 +178,8 @@ public class IdServer implements IdServerInterface {
         if (!db.CheckPassword(Constants.loginName, oldLoginName, password)) {
             return Constants.failure + Constants.colon + Constants.wrongPassword;
         }
-
-        String resultUpdate = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName, lamportTime++, sync);
+        sync.getLampTime();
+        String resultUpdate = db.Update(Constants.loginName, oldLoginName, Constants.loginName, newLoginName, sync.getLampTime(), sync);
 
         if (resultUpdate.startsWith(Constants.failure)) {
             return resultUpdate;
@@ -178,7 +187,8 @@ public class IdServer implements IdServerInterface {
 
         LocalDate dateNow = LocalDate.now();
         String dateNowString = dateNow.toString();
-        String resultUpdateLastChange = db.Update(Constants.loginName, newLoginName, Constants.lastChangeDate, dateNowString, lamportTime++, sync);
+        sync.increaseLamportTime();
+        String resultUpdateLastChange = db.Update(Constants.loginName, newLoginName, Constants.lastChangeDate, dateNowString, sync.getLampTime(), sync);
 
         return resultUpdateLastChange;
     }
@@ -193,6 +203,12 @@ public class IdServer implements IdServerInterface {
      * @see RemoteException
      */
     public String delete(String loginName, String password) throws RemoteException {
+
+        if(!sync.isCoordinator()){
+            IdServerInterface coordinatorStub = getCoordinatorStub();
+            return coordinatorStub.delete(loginName, password);
+        }
+
         if (db == null) {
             db = new Database(log);
         }
@@ -215,6 +231,12 @@ public class IdServer implements IdServerInterface {
      * @see RemoteException
      */
     public List<String> get(String option) throws RemoteException {
+
+        if(!sync.isCoordinator()){
+            IdServerInterface coordinatorStub = getCoordinatorStub();
+            return coordinatorStub.get(option);
+        }
+
         if (db == null) {
             db = new Database(log);
         }
@@ -285,18 +307,45 @@ public class IdServer implements IdServerInterface {
         return ServerPort;
     }
 
+    public void syncUsingLamportTime(syncObject referenceSync){
+        for (int refLamportTime : referenceSync.getLampHistory().keySet()){
+            if(!sync.getLampHistory().containsKey(refLamportTime)){
+                //I don't have this update so I will update myself
+                // Update my history table
+                sync.getLampHistory().put(refLamportTime, referenceSync.getLampHistory().get(refLamportTime));
+                sync.updateLamportTimeFromHistory(); // This will assign the higest value from the history to the lamport time.
+                db.updateFromLamportTimeSync(refLamportTime, referenceSync.getLampHistory().get(refLamportTime));
+            }
+        }
+    }
+
+    public IdServerInterface getCoordinatorStub(){
+        IdServerInterface stub;
+        try{
+            Registry registry = LocateRegistry.getRegistry(sync.getCoordinatorAddress(), sync.getCoordinatorPort());
+            stub = (IdServerInterface) registry.lookup("IdServer");
+        } catch (Exception e){
+            log.warning("Didn't find the coordinator");
+            //So we will set the election is requied
+            sync.unsetCoordinator(); // This will asign me as coordinator and automatically invoke a new election
+            stub = this;
+        }
+        return stub;
+    }
+
     public static void main(String args[]) throws RemoteException {
-        System.setProperty("javax.net.ssl.keyStore", "/p2/src/main/resources/security/Server_Keystore");
-        System.setProperty("java.security.policy", "/p2/src/main/resources/security/mysecurity.policy");
+        System.setProperty("java.net.preferIPv4Stack", "true");
+        System.setProperty("javax.net.ssl.keyStore", "security/Server_Keystore");
+        System.setProperty("java.security.policy", "security/mysecurity.policy");
         System.setProperty("javax.net.ssl.keyStorePassword", "test123");
 
         IdServer server = new IdServer(args);
         server.bind();
 
-        Thread t = new Thread(new CheckServersThread(5176, "230.230.246.1", server.GetServerUUID(), server));
+        Thread t = new Thread(new CheckServersThread(5176, "224.0.0.1", server.GetServerUUID(), server));
         t.start();
 
-        Thread t2 = new Thread(new SendStatusToOtherServersThread(5176, "230.230.246.1", server.GetServerUUID(), server));
+        Thread t2 = new Thread(new SendStatusToOtherServersThread(5176, "224.0.0.1", server.GetServerUUID(), server));
         t2.start();
 
 
@@ -326,32 +375,6 @@ public class IdServer implements IdServerInterface {
         return this.serverUUID;
     }
 
-    public UUID GetCoordinatorUUID() {
-        return this.coordinatorUUID;
-    }
-
-    public void SetCoordinatorUUID(UUID coordinatorUUID) {
-        this.coordinatorUUID = coordinatorUUID;
-    }
-    
-    /*public boolean GetIsCoordinator()
-    {
-    	return this.isCoordinator;
-    }
-    public void SetIsCoordinator(boolean isCoordinator)
-    {
-    	this.isCoordinator = isCoordinator;
-    }
-    
-    public boolean GetIsCoordinatorElected()
-    {
-    	return this.isCoordinatorElected;
-    }
-    public void SetIsCoordinatorElected(boolean isCoordinatorElected)
-    {
-    	this.isCoordinatorElected = isCoordinatorElected;
-    }*/
-
     public CommunicationMode GetCommunicationMode() {
         return this.serverCommunicationMode;
     }
@@ -373,7 +396,7 @@ class CheckServersThread implements Runnable {
     private int port;
     private MulticastSocket socket;
     private InetAddress group;
-    private int MAX_LEN = 1000;
+    private int MAX_LEN = 10000000;
     private UUID serverUUID;
     private IdServer idServer;
     private Timer timer = null;
@@ -399,7 +422,6 @@ class CheckServersThread implements Runnable {
     private void createMulticastConenction() {
         try {
             socket = new MulticastSocket(port);
-            socket.setTimeToLive(5);
             socket.joinGroup(group);
         } catch (IOException e) {
             System.out.println("IOException during socket intialization");
@@ -411,9 +433,6 @@ class CheckServersThread implements Runnable {
         byte[] buffer = new byte[this.MAX_LEN];
         // This dataagram will be syncObject
         DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, this.group, this.port);
-        String message;
-        //Convert the byte array to the syncObject
-
 
         while (true) {
             try {
@@ -423,7 +442,6 @@ class CheckServersThread implements Runnable {
                 syncObject receivedSyncObj = (syncObject) in.readObject();
 
                 System.out.println("receiving message: " + receivedSyncObj.getMessage());
-
                 if (receivedSyncObj.getCommMode() == CommunicationMode.ELECTION_REQUIRED) {
                     this.LastTimeCoordinatorResponded = LocalDateTime.now();
 
@@ -462,7 +480,11 @@ class CheckServersThread implements Runnable {
                     if (idServer.getSync().getCoordinatorUUID() == null) { // IF my coordinator information is set to null then I will update myself
                         System.out.println("coord UUID being changed...1");
                         this.idServer.getSync().setCoordinatorUUID(receivedSyncObj.getCoordinatorUUID());
-                    } else if (idServer.getSync().getCoordinatorUUID().toString().compareTo(receivedSyncObj.getCoordinatorUUID().toString()) <= 0) { // if someone else has less UUID number then update myself and make him coordinator
+                    } else if(idServer.getSync().getLampTime() > receivedSyncObj.getLampTime()){ // I have the highest lamport time so I will be coordinator.
+                        idServer.getSync().setMyselfasCoordinator();
+                    } else if(idServer.getSync().getLampTime() < receivedSyncObj.getLampTime()){ // sender has the highest lamport time so he will be the co ordinator
+                        idServer.getSync().updateCoordinator(receivedSyncObj);
+                    }else if (idServer.getSync().getCoordinatorUUID().toString().compareTo(receivedSyncObj.getCoordinatorUUID().toString()) <= 0) { // if lamport time is same  and if someone else has less UUID number then update myself and make him coordinator
                         System.out.println("coord UUID being changed...2");
                         this.idServer.getSync().setCoordinatorUUID(receivedSyncObj.getCoordinatorUUID());
                     }
@@ -478,6 +500,7 @@ class CheckServersThread implements Runnable {
                         System.out.println("coordinator elected: " + this.idServer.getSync().getCoordinatorUUID().toString());
                     }
                 } else if (!receivedSyncObj.isCoordinator()) {
+
                     System.out.println("Message from regular server");
                 } else if (receivedSyncObj.isCoordinator()) {
                     this.LastTimeCoordinatorResponded = LocalDateTime.now();
@@ -489,81 +512,12 @@ class CheckServersThread implements Runnable {
                     timer = new Timer();
                     timerTask = new ExecuteTimer(this);
                     timer.scheduleAtFixedRate(timerTask, 7000, 7000);
+                    // Syncing the lamport time
+                    if(receivedSyncObj.getLampTime() > idServer.getSync().getLampTime()){
+                        // Lamport time doesn't match so we will update the server accordingly
+                        idServer.syncUsingLamportTime(receivedSyncObj);
+                    }
                 }
-
-//                String[] splitted = message.split("\\s+");
-//
-//                String command = splitted[0];
-//                String tempCoordUUID = splitted[1];
-//
-//                if (command.equals(Constants.doElection)) {
-//                    this.LastTimeCoordinatorResponded = LocalDateTime.now();
-//                    if (timer != null) {
-//                        timer = null;
-//                        timerTask = null;
-//                    }
-//
-//                    timer = new Timer();
-//                    timerTask = new ExecuteTimer(this);
-//                    timer.scheduleAtFixedRate(timerTask, 7000, 7000);
-//                    //
-//                    //
-//                    System.out.println("ping received to execute election");
-//                    //doElection uuid
-//                    if (this.idServer.GetCoordinatorUUID() == null) {
-//                        this.idServer.SetCoordinatorUUID(UUID.fromString(tempCoordUUID));
-//                    } else if (this.idServer.GetCoordinatorUUID().toString().compareTo(tempCoordUUID) <= 0) {
-//                        System.out.println("value: " + this.idServer.GetCoordinatorUUID().toString() + " being replaced with: " + tempCoordUUID);
-//                        this.idServer.SetCoordinatorUUID(UUID.fromString(tempCoordUUID));
-//                    }
-//                    this.idServer.SetCommunicationMode(CommunicationMode.ELECTION_RUNNING);
-//                    this.idServer.SetElectionCounter(0);
-//                } else if (command.equals(Constants.keepRunningElection)) {
-//                    //
-//                    //
-//                    this.LastTimeCoordinatorResponded = LocalDateTime.now();
-//                    if (timer != null) {
-//                        timer = null;
-//                        timerTask = null;
-//                    }
-//
-//                    timer = new Timer();
-//                    timerTask = new ExecuteTimer(this);
-//                    timer.scheduleAtFixedRate(timerTask, 7000, 7000);
-//                    //
-//                    //
-//                    if (this.idServer.GetCoordinatorUUID() == null) {
-//                        System.out.println("coord UUID being changed...1");
-//                        this.idServer.SetCoordinatorUUID(UUID.fromString(tempCoordUUID));
-//                    } else if (this.idServer.GetCoordinatorUUID().toString().compareTo(tempCoordUUID) <= 0) {
-//                        System.out.println("coord UUID being changed...2");
-//                        System.out.println("value: " + this.idServer.GetCoordinatorUUID().toString() + " being replaced with: " + tempCoordUUID);
-//                        this.idServer.SetCoordinatorUUID(UUID.fromString(tempCoordUUID));
-//                    }
-//                    this.idServer.SetElectionCounter(this.idServer.GetElectionCounter() + 1);
-//
-//                    System.out.println("election running with counter: " + this.idServer.GetElectionCounter());
-//
-//                    //check limit to stop the election
-//                    if (this.idServer.GetElectionCounter() >= Constants.limit) {
-//                        this.idServer.SetCommunicationMode(CommunicationMode.COORDINATOR_ELECTED);
-//                        this.idServer.SetElectionCounter(0);
-//
-//                        System.out.println("coordinator elected: " + this.idServer.GetCoordinatorUUID());
-//                    }
-//                } else if (command.equals(Constants.iAmHere)) {
-//                    //do nothing, just another server pinging
-//                } else if (command.equals(Constants.iAmCoordinator)) {
-//                    this.LastTimeCoordinatorResponded = LocalDateTime.now();
-//                    if (timer != null) {
-//                        timer = null;
-//                        timerTask = null;
-//                    }
-//
-//                    timer = new Timer();
-//                    timerTask = new ExecuteTimer(this);
-//                    timer.scheduleAtFixedRate(timerTask, 7000, 7000);
-//                }
             } catch (IOException e) {
                 System.out.println("IOException during receiving servers activity");
                 e.printStackTrace();
@@ -609,7 +563,6 @@ class SendStatusToOtherServersThread implements Runnable {
         try {
             socket = new MulticastSocket(port);
             socket.setTimeToLive(5);
-            socket.joinGroup(group);
         } catch (IOException e) {
             System.out.println("IOException during socket intialization");
             e.printStackTrace();
@@ -617,8 +570,6 @@ class SendStatusToOtherServersThread implements Runnable {
     }
 
     public void run() {
-        //String message = "I am alive server_no: " + this.serverUUID.toString();
-
         while (true) {
             //Don't send the raw message instead send the syncronization message
             if(idServer.getSync().getCommMode() == CommunicationMode.COORDINATOR_ELECTED){
@@ -629,7 +580,6 @@ class SendStatusToOtherServersThread implements Runnable {
                     idServer.getSync().setMyselfasNotCoordinator();
                 }
             }
-
             try {
                 // convert the object to bytes
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -649,36 +599,6 @@ class SendStatusToOtherServersThread implements Runnable {
                 System.out.println("InterruptedException during receiving servers activity");
                 e.printStackTrace();
             }
-
-
-
-//            String message = null;
-//            UUID myCoordUUID = this.idServer.GetCoordinatorUUID();
-//            if (myCoordUUID == null) {
-//                message = Constants.doElection + Constants.space + this.serverUUID.toString();
-//            } else if (this.idServer.GetCommunicationMode() == CommunicationMode.ELECTION_REQUIRED) {
-//                message = Constants.doElection + Constants.space + this.serverUUID.toString();
-//            } else if (this.idServer.GetCommunicationMode() == CommunicationMode.ELECTION_RUNNING) {
-//                message = Constants.keepRunningElection + Constants.space + this.serverUUID.toString();
-//            } else if (this.idServer.GetCommunicationMode() == CommunicationMode.COORDINATOR_ELECTED) {
-//                if (this.idServer.GetServerUUID().toString().compareTo(this.idServer.GetCoordinatorUUID().toString()) == 0) {
-//                    message = Constants.iAmCoordinator + Constants.space + this.serverUUID.toString();
-//                } else {
-//                    message = Constants.iAmHere + Constants.space + this.serverUUID.toString();
-//                }
-//            }
-//            try {
-//                byte[] buffer = message.getBytes();
-//                DatagramPacket datagram = new DatagramPacket(buffer, buffer.length, group, port);
-//                socket.send(datagram);
-//                Thread.sleep(3000);
-//            } catch (IOException e) {
-//                System.out.println("IOException during receiving servers activity");
-//                e.printStackTrace();
-//            } catch (InterruptedException e) {
-//                System.out.println("InterruptedException during receiving servers activity");
-//                e.printStackTrace();
-//            }
         }
     }
 }

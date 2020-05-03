@@ -57,7 +57,7 @@ public class Database extends Thread
 	
 	/**
 	   * inserts a new user into the database.
-	   * @param LoginName - the login name of the user.
+	   * @param loginName - the login name of the user.
 	   * @param uuid - the uuid of the user.
 	   * @param password - the password hash of the user.
 	   * @param ipAddress - the creation ip address of the user.
@@ -115,10 +115,13 @@ public class Database extends Thread
 		
 		try
 		{
+
 			//inserting user data
 			statement.executeUpdate(query);
-			sync.insertHistory(lamport, query);
+			System.out.println("Inserting lamport history");
+
 			log.info(Constants.dataInserted + Constants.colon + loginName);
+			sync.insertHistory(lamport, query);
 			return Constants.success + Constants.colon + Constants.dataInserted + Constants.colon + loginName;
 		}
 		catch (SQLException e)
@@ -651,6 +654,9 @@ public class Database extends Thread
 				log.warning(Constants.sqlException + Constants.insertion + Constants.colon + e.getStackTrace().toString());
 			}
 	    }
+	}
+	public void updateFromLamportTimeSync(int lamportTime, String Query){
+
 	}
 	public int InitializeLamport()
 	{

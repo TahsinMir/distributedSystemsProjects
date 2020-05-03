@@ -1,6 +1,8 @@
 package Identity.server;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 import Identity.server.CommunicationMode;
@@ -12,6 +14,7 @@ import Identity.server.CommunicationMode;
 // Action history of the server
 
 public class syncObject implements Serializable {
+    private static final long serialVersionUID = 8510538827054962875L;
     private int lampTime;
     private HashMap<Integer, String> lampHistory;
     private String myAddress;
@@ -58,6 +61,14 @@ public class syncObject implements Serializable {
         setMyselfasCoordinator(); // Temporarily I am setting myself as coordinator
         this.message = "No coordinaotr is selected yet. Election required";
         this.commMode = CommunicationMode.ELECTION_REQUIRED;
+    }
+
+    public void increaseLamportTime(){
+        lampTime++;
+    }
+
+    public void updateLamportTimeFromHistory(){
+        lampTime = Collections.max(lampHistory.keySet());
     }
 
     public String getMessage() {

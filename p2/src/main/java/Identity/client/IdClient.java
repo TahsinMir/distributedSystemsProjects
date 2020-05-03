@@ -238,15 +238,10 @@ public class IdClient {
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException {
         //System.out.println(System.getProperty("user.dir"));
-        System.setProperty("javax.net.ssl.trustStore", Thread.currentThread().getContextClassLoader().getResource("security/Client_Truststore").getPath());
-        System.setProperty("java.security.policy", Thread.currentThread().getContextClassLoader().getResource("security/mysecurity.policy").getPath());
+        System.setProperty("javax.net.ssl.trustStore", "security/Client_Truststore");
+        System.setProperty("java.security.policy", "security/mysecurity.policy");
         System.setProperty("javax.net.ssl.trustStorePassword", "test123");
 
-        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        InputStream is = classloader.getResourceAsStream("security/mysecurity.policy");
-        String path = is.toString();
-//        String url = IdClient.getClass().getResource("config.xml").toString();
-        InputStream sqlScriptUrl = Thread.currentThread().getContextClassLoader().getResourceAsStream("security/mysecurity.policy");
         Options options = makeOption();
 
         IdClient client = new IdClient();
