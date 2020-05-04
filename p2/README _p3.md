@@ -6,13 +6,10 @@
 
 ## Overview
 
-In this assignment, we implemented a RMI based identity server. The client can connect to this server and submit a new 
-login name request. The server checks its database and responds back either with a Universally Unique ID (UUID) if the 
-new login id hasn’t been taken by anyone before or returns back with an error. As part of the request to create a new 
-login name, the client must submit a real user name and password as well. The server permits login name lookup, where a
-client submits a login name and asks for information assosiated with that login name. The server also permits reverse
-lookups, where a client submits a UUID and ask for the login name and other information associated with that UUID. The
-server periodically saves its state on to the disk so that it can survive crashes and shutdowns.
+In this assignment, We ran multiple copies of the Identity servers. We tested the copies of the server using Docker.
+The main purpose of having multiple servers is to increase reliability. We implement the bully algorithm for the servers
+to select a coordinator, and we also implemented sequential consistency. All the requirements from p2 is inherited and
+working properly as well as our election algorithm and data synchronization and communication between servers.
 
 ## Manifest
 
