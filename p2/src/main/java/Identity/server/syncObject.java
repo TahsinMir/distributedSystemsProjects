@@ -40,12 +40,14 @@ public class syncObject implements Serializable {
         this.coordinatorAddress = this.myAddress;
         this.coordinatorUUID = this.myUUID;
         this.coordinatorPort = this.myPort;
-        this.message = this.myAddress+":"+this.myPort +" lamporttime --> " + lampTime + " coordinator --> "+this.coordinatorAddress;
+        String[] myaddressarr = this.myAddress.split("/");
+        this.message = myaddressarr[myaddressarr.length - 1] +" --> "+this.myPort +" lamporttime: " + lampTime + " coordinator: "+this.coordinatorAddress;
         this.amICoordinator = true;
     }
 
     public void setMyselfasNotCoordinator(){
-        this.message = this.myAddress+":"+this.myPort +" lamporttime --> " + lampTime + " coordinator --> "+this.coordinatorAddress;
+        String[] myaddressarr = this.myAddress.split("/");
+        this.message = myaddressarr[myaddressarr.length - 1] +" --> "+this.myPort +" lamporttime: " + lampTime + " coordinator: "+this.coordinatorAddress;
         this.amICoordinator = false;
     }
 

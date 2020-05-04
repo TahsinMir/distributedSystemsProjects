@@ -655,9 +655,14 @@ public class Database extends Thread
 			}
 	    }
 	}
-	public void updateFromLamportTimeSync(int lamportTime, String Query){
-
+	public void updateFromLamportTimeSync(int lamportTime, String query){
+		try{
+			statement.executeUpdate(query);
+		}catch (SQLException e) {
+			log.warning(Constants.sqlException + Constants.insertion + Constants.colon + e.getStackTrace().toString());
+		}
 	}
+
 	public int InitializeLamport()
 	{
 		try

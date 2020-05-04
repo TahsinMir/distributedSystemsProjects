@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 public class IdServer implements IdServerInterface {
 
     private Database db = null;
-    private int ServerPort = 5099;
+    private int ServerPort = 5005;
     private boolean isVerbose = false;
     private Logger log;
     private UUID serverUUID;
@@ -70,7 +70,7 @@ public class IdServer implements IdServerInterface {
 
         // Create new syncObject
         // My address will be set later once i connected with the RMI registry
-        sync = new syncObject(getServerPort(), null, this.serverUUID);
+        sync = new syncObject(getServerPort(), "localhost", this.serverUUID);
         sync.setLampTime(db.InitializeLamport());
     }
 
@@ -321,7 +321,7 @@ public class IdServer implements IdServerInterface {
     public IdServerInterface getCoordinatorStub(){
         IdServerInterface stub;
         try{
-            System.out.println("Coordinator address is: " + sync.getCoordinatorAddress() +" Port is : "+ sync.getCoordinatorPort());
+            log.info("Coordinator address is: " + sync.getCoordinatorAddress() +" Port is : "+ sync.getCoordinatorPort());
             String[] coordinatoraddresswithHost = sync.getCoordinatorAddress().split("/");
             Registry registry = LocateRegistry.getRegistry(coordinatoraddresswithHost[coordinatoraddresswithHost.length - 1], sync.getCoordinatorPort());
             stub = (IdServerInterface) registry.lookup("IdServer");
@@ -447,7 +447,7 @@ class CheckServersThread implements Runnable {
                 ObjectInput in = new ObjectInputStream(bis);
                 syncObject receivedSyncObj = (syncObject) in.readObject();
 
-                idServer.getLog().info("receiving message: " + receivedSyncObj.getMessage());
+                idServer.getLog().info(receivedSyncObj.getMessage());
                 if (receivedSyncObj.getCommMode() == CommunicationMode.ELECTION_REQUIRED) {
                     this.LastTimeCoordinatorResponded = LocalDateTime.now();
 
