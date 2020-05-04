@@ -34,11 +34,11 @@ server periodically saves its state on to the disk so that it can survive crashe
 Run the following command to create a docker container:  
  `$ sudo docker build -t p3 .`  
 Run the following command to start the IdServer:  
- `$ sudo docker run -it idserver -v -n 5179`  
+ `$ sudo docker run -it p3 idserver -v -n 5005`  
 You can use any other free port available in the machine. For example `5005`. If verbose option is mentioned, the server will print all log messages.
 
 The IdClient uses command line to connect to the IdServer, does one operation and then quits. We can run the IdClient by running:  
- `$ sudo docker run -it idclient --server-list <serverlist> <query>`
+ `$ sudo docker run -it p3 idclient --server-list <serverlist> <query>`
 
 Serverlist is file that contains the list of available server. By default client will use the availble serverlist that
 is given in the source directory. However, it can be replace by --server-list command
