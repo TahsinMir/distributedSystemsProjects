@@ -12,9 +12,9 @@ COPY . /p2
 
 # Move in the correct directory
 
-#WORKDIR /p2/
+WORKDIR /p2/
 
-#RUN (make)
+RUN (make)
 
 ENTRYPOINT ["/bin/bash", "/p2/run.sh"]
 # Install the ls program
