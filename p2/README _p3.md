@@ -74,28 +74,15 @@ Some of the scenarios that we checked are:
 - Delete command was tested for both with password, without password and with wrong password.
 - Get was check with all possible types.
 
-2) When a server is running, it immediately looks for other servers in the network and initiates an election algorithm. The election
-ends when a coordinator is selected. If this is the only server, eventually it elects itself and becomes coordinator. When other
-servers comes into action they also start election with the existing servers and selects a coordinator. The server with higher
-lamport time wins the election because it has more recent data than others. If two server have the same information or same lamport
-time, then the server with lower unique id(UUID) wins.
+2) To test the IdServer's election algorithm and synchronization, we tested the following,
 
-When a coordinator goes down, the other servers notice that there is no response from the coordinator for a particular amount of
-time(7 seconds) as they continuously keeps communication with the coordinator. The other servers then starts a new election to elect
-a new coordinator among the currently active servers. No one notifies the client but when the client makes the next request to a valid
-running server, it forwards that request to the newly elected server.
-
-When a coordinator comes back to life after it crashes or the network wire is removed, it immediately requests a new election as an
-servers newly coming online would do, and if it satisfies the requirements(higher lamport, lower unique id), then it will become
-coordinator again. The servers sync their information with other server by exchanging their latest lamport time.
-
-If one of the backup servers loses connection, the other servers along with the coordinator keeps working as usual. When it comes back
-to life again, it initiates an election as usual and then syncs with the other servers.
-
-3) When a client contacts a server for executing a particular command, it that server is the coordinator, the command is executed
-immediately and the other servers sync with the coordinator. However, if it is a backup server, it forwards that request to the coordinator,
-the coordinator does the operation and then the backup server notifies the client about success or failure, and then the backup servers
-sync with the coordinator.
+- Check whether a Server looks for other servers and request an election the first time it comes online(pass).
+- Check whether a Server elects a coordinator when its the only instance running and when there are multiple  servers running(pass).
+- Check whether an already elected Coordinator participates in the electon initiated by a new server(Pass).
+- Check whether the server with the most recent information(lamport, and uuid if lamport time is equal) is elected(pass).
+- Check whether a server synchronizes with other servers when it stops/crashes and comes back to life afterwards(pass).
+- Check Whether all the client requests are handled by the coordinator or forwarded to the coordinator to be handled(pass).
+- Check Whether clients get the updated information although the previous coordinator is offline(pass).
 
 ## Reflection and Self Assessment
 As mentioned in the testing scenarios above, when there are multiple servers running, they elecet a coordinator by executing an election
