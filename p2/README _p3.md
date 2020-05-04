@@ -2,7 +2,7 @@
 
 * Author: Tahsin Imtiaz & Golam Mortuza(Team-17)
 * Class: CS555 Spring 2020 [Distributed System]
-* Demo of the project: TODO:: link to be shared
+* Demo of the project: https://drive.google.com/file/d/1k7mWU9K0QM4kFVsOU-o9dEn6l6M_Y9BO/view?usp=sharing
 
 ## Overview
 
@@ -31,14 +31,17 @@ server periodically saves its state on to the disk so that it can survive crashe
 
 ## Building the project
 
-Run the following command to compile the project:  
- `$ make`  
+Run the following command to create a docker container:  
+ `$ sudo docker build -t p3 .`  
 Run the following command to start the IdServer:  
- `$ make idserver ARGS="-v -n 5179"`  
+ `$ sudo docker run -it idserver -v -n 5179`  
 You can use any other free port available in the machine. For example `5005`. If verbose option is mentioned, the server will print all log messages.
 
 The IdClient uses command line to connect to the IdServer, does one operation and then quits. We can run the IdClient by running:  
- `$ make idclient ARGS=" --server <serverhost> [--numport <port#>] <query>"`
+ `$ sudo docker run -it idclient --server-list <serverlist> <query>`
+
+Serverlist is file that contains the list of available server. By default client will use the availble serverlist that
+is given in the source directory. However, it can be replace by --server-list command
 
 Here <query> is the command line query that the IdClient wants to execute. It must support at least six types of command line queries as follows:  
 	
@@ -71,7 +74,7 @@ Some of the scenarios that we checked are:
 - Delete command was tested for both with password, without password and with wrong password.
 - Get was check with all possible types.
 
-2) When a server is run, it immediately looks for other servers in the network and initiates an election algorithm. The election
+2) When a server is running, it immediately looks for other servers in the network and initiates an election algorithm. The election
 ends when a coordinator is selected. If this is the only server, eventually it elects itself and becomes coordinator. When other
 servers comes into action they also start election with the existing servers and selects a coordinator. The server with higher
 lamport time wins the election because it has more recent data than others. If two server have the same information or same lamport
@@ -95,14 +98,16 @@ the coordinator does the operation and then the backup server notifies the clien
 sync with the coordinator.
 
 ## Reflection and Self Assessment
-TODO::As mentioned in the testing scenarios above, when there are multiple servers running, they elecet a coordinator by executing an election
+As mentioned in the testing scenarios above, when there are multiple servers running, they elecet a coordinator by executing an election
 using the bully algorthim. The election communication was implemented using multicasing. The backup servers repeatedly sync with the
-coordinator.The functionalities of the previous version still remains. When clients requests some operation to be done, if the required
-information in the active memory(hashtable), it immediately return the information from there, otherwise it looks through storage(sqlite)
-to retrieve the data. So even if a server is shutdown, it can always get the data from the database. Therefore server crash won't be a
-big deal for this case. The password was encrypted using the SHA256 hash. SSL was implemented.
-
+coordinator. Data was stored in a database so server crash won't be a bigdeal. server can sync their database using lamport time.
+Client will have a list of available server. Client will iterover the server untill he gets back reply. Doesn't matter 
+whichever server client will connect, only the coordinator will provide client the services. So in the backend all server
+will invoke the coordinator method. So client doesn't need the coordinator information. As soon as coordinator provide a
+service, he will broadcast the service to all by attaching the lamport time. Everybody will update their database based 
+the lamport time activity. So server will make a checkpoint with the changes of lamport time. If a new server joins it will
+take the lamport timestamp history from coordinator and update itself. All the RMI method was done using SSL.
 
 Both Golam and Tahsin contributed for this project. Following is their specific contributions:
-Golam: TODO:: Implemnted RMI with SSL certificate, implement SHA256 for password, client method on client side, Command line argument parser, result object(user).
-Tahsin: Implemented the election algorithm(bully), synced database with lamport timestamps.
+Golam: synced database with lamport timestamps
+Tahsin: Implemented the election algorithm(bully)
