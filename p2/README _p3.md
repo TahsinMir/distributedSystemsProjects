@@ -2,7 +2,7 @@
 
 * Author: Tahsin Imtiaz & Golam Mortuza(Team-17)
 * Class: CS555 Spring 2020 [Distributed System]
-* Demo of the project: https://drive.google.com/file/d/1k7mWU9K0QM4kFVsOU-o9dEn6l6M_Y9BO/view?usp=sharing
+* Demo of the project: https://drive.google.com/file/d/1tI3P4w6u7TUVokcNYZRYSEDLAJUCMqQS/view?usp=sharing
 
 ## Overview
 
@@ -25,44 +25,45 @@ working properly as well as our election algorithm and data synchronization and 
 |syncObject.java        | Contains functions for message passing between the servers(e.g. lamport time, who is coordinator etc)|
 |User.java              | Contains the structure and functions to transfer data between client and server and between servers  |
 |Makefile               | Contains the makefile of this project                                                                |
+|serverList.txt         | Contains the list of available srver                                                                 |
 
 ## Building the project
 
-Run the following command to create a docker container:  
- `$ sudo docker build -t p3 .`  
-Run the following command to start the IdServer:  
- `$ sudo docker run -it p3 idserver -v -n 5005`  
+Run the following command to create a docker container:
+ `$ sudo docker build -t p3 .`
+Run the following command to start the IdServer:
+ `$ sudo docker run -it p3 idserver -v -n 5005`
 You can use any other free port available in the machine. For example `5005`. If verbose option is mentioned, the server will print all log messages.
 
-The IdClient uses command line to connect to the IdServer, does one operation and then quits. We can run the IdClient by running:  
+The IdClient uses command line to connect to the IdServer, does one operation and then quits. We can run the IdClient by running:
  `$ sudo docker run -it p3 idclient --server-list <serverlist> <query>`
 
 Serverlist is file that contains the list of available server. By default client will use the availble serverlist that
 is given in the source directory. However, it can be replace by --server-list command
 
-Here <query> is the command line query that the IdClient wants to execute. It must support at least six types of command line queries as follows:  
-	
-	--create <loginname> [<real name>] [--password <password>]   
-		the client requests to create a new login name.
-	--lookup <loginname>  
-		the client looks for user information for the certain loginname.  
-	--reverse-lookup <UUID>  
-		the client looks for user information for the certain UUID.  
-	--modify <oldloginname> <newloginname> [--password <password>]  
-		the client requests a modification of the loginname with the new loginname.  
-	--delete <loginname> [--password <password>]  
-		the client requests to delete the information with the particular loginname.  
-	--get users|uuids|all  
-		the client requests information of all user. Either it is only the login names, or uuids or full information list  
+Here <query> is the command line query that the IdClient wants to execute. It must support at least six types of command line queries as follows:
 
-Run the following command to remove the compiled file from the directory:  
- `$ make clean`  
+	--create <loginname> [<real name>] [--password <password>]
+		the client requests to create a new login name.
+	--lookup <loginname>
+		the client looks for user information for the certain loginname.
+	--reverse-lookup <UUID>
+		the client looks for user information for the certain UUID.
+	--modify <oldloginname> <newloginname> [--password <password>]
+		the client requests a modification of the loginname with the new loginname.
+	--delete <loginname> [--password <password>]
+		the client requests to delete the information with the particular loginname.
+	--get users|uuids|all
+		the client requests information of all user. Either it is only the login names, or uuids or full information list
+
+Run the following command to remove the compiled file from the directory:
+ `$ make clean`
 
 ## Testing
 1) The tests from p2(Identity server phase I) are also applied here on this part of the project
 Every scenario was examined manually.
 Some of the scenarios that we checked are:
-- The SSL was tested by providing the wrong password for the javax.net.ssl.trustStorePassword and also by changing the 
+- The SSL was tested by providing the wrong password for the javax.net.ssl.trustStorePassword and also by changing the
   valid certificate as expected the server didn't work either of the cases.
 - Create was check with no real name and no password.
 - Lookup was checked with valid login name, invalid login name and after server close and re-run.
@@ -85,10 +86,10 @@ Some of the scenarios that we checked are:
 As mentioned in the testing scenarios above, when there are multiple servers running, they elecet a coordinator by executing an election
 using the bully algorthim. The election communication was implemented using multicasing. The backup servers repeatedly sync with the
 coordinator. Data was stored in a database so server crash won't be a bigdeal. server can sync their database using lamport time.
-Client will have a list of available server. Client will iterover the server untill he gets back reply. Doesn't matter 
+Client will have a list of available server. Client will iterover the server untill he gets back reply. Doesn't matter
 whichever server client will connect, only the coordinator will provide client the services. So in the backend all server
 will invoke the coordinator method. So client doesn't need the coordinator information. As soon as coordinator provide a
-service, he will broadcast the service to all by attaching the lamport time. Everybody will update their database based 
+service, he will broadcast the service to all by attaching the lamport time. Everybody will update their database based
 the lamport time activity. So server will make a checkpoint with the changes of lamport time. If a new server joins it will
 take the lamport timestamp history from coordinator and update itself. All the RMI method was done using SSL.
 
