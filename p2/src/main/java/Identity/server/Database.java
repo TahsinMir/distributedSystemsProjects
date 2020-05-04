@@ -612,6 +612,10 @@ public class Database extends Thread
 		}
 	}
 	
+	/**
+	   * Saves all information to the disk that is not already in the disk
+	   * @return nothing.
+	   */
 	public void SaveAllToDisk()
 	{
 		Set<String> allKeys = UserInfo.keySet();
@@ -655,6 +659,12 @@ public class Database extends Thread
 			}
 	    }
 	}
+	/**
+	   * Backup servers use this to sync with coordinator
+	   * @param lamportTime - the lamport timestamp.
+	   * @param query - the query to be executed
+	   * @return nothing.
+	   */
 	public void updateFromLamportTimeSync(int lamportTime, String query){
 		try{
 			statement.executeUpdate(query);
@@ -663,6 +673,10 @@ public class Database extends Thread
 		}
 	}
 
+	/**
+	   * Initializes the lamport timestamp when the server starts
+	   * @return nothing.
+	   */
 	public int InitializeLamport()
 	{
 		try

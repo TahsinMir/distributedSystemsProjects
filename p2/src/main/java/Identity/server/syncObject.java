@@ -27,6 +27,12 @@ public class syncObject implements Serializable {
     private CommunicationMode commMode;
     private boolean amICoordinator = false;
 
+    /***
+     * Creates one instance of syncObject
+     * @param port - the port of the server
+     * @param myAddress - the address
+     * @param serverUUID - the server unique uuid
+     */
     public syncObject(int myPort, String myAddress, UUID myUUID){
         lampHistory = new HashMap<>();
         this.myPort = myPort;
@@ -36,6 +42,9 @@ public class syncObject implements Serializable {
         unsetCoordinator();
     }
 
+    /**
+     * sets the server as the coordinator
+     */
     public void setMyselfasCoordinator(){
         this.coordinatorAddress = this.myAddress;
         this.coordinatorUUID = this.myUUID;
@@ -45,12 +54,18 @@ public class syncObject implements Serializable {
         this.amICoordinator = true;
     }
 
+    /**
+     * sets the server as a non-coordinator
+     */
     public void setMyselfasNotCoordinator(){
         String[] myaddressarr = this.myAddress.split("/");
         this.message = myaddressarr[myaddressarr.length - 1] +" --> "+this.myPort +" lamporttime: " + lampTime + " coordinator: "+this.coordinatorAddress;
         this.amICoordinator = false;
     }
 
+    /**
+     * updates the coordinator
+     */
     public void updateCoordinator(syncObject receivedObj){
         setMyselfasCoordinator();
         this.coordinatorAddress = receivedObj.getCoordinatorAddress();
@@ -59,16 +74,25 @@ public class syncObject implements Serializable {
         setMyselfasNotCoordinator();
     }
 
+    /**
+     * unsets the coordinator
+     */
     public void unsetCoordinator(){
         setMyselfasCoordinator(); // Temporarily I am setting myself as coordinator
         this.message = "No coordinator is selected yet. Election required";
         this.commMode = CommunicationMode.ELECTION_REQUIRED;
     }
 
+    /**
+     * Handles lamport time increase
+     */
     public void increaseLamportTime(){
         lampTime++;
     }
 
+    /**
+     * updates lamport time from history
+     */
     public void updateLamportTimeFromHistory(){
         lampTime = Collections.max(lampHistory.keySet());
     }
@@ -81,14 +105,23 @@ public class syncObject implements Serializable {
         this.message = message;
     }
 
+    /**
+     * Inserts history in the server
+     */
     public void insertHistory(int lampTime, String databasecommand){
         lampHistory.put(lampTime, databasecommand);
     }
 
+    /**
+     * returns the lampot time
+     */
     public int getLampTime() {
         return lampTime;
     }
 
+    /**
+     * sets the lamport time
+     */
     public void setLampTime(int lampTime) {
         this.lampTime = lampTime;
     }

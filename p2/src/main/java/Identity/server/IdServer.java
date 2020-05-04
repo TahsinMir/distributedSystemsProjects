@@ -43,9 +43,7 @@ public class IdServer implements IdServerInterface {
     private boolean isVerbose = false;
     private Logger log;
     private UUID serverUUID;
-    /*private boolean isCoordinator;
-    private boolean isCoordinatorElected;*/
-    private CommunicationMode serverCommunicationMode;
+    private CommunicationMode serverCommunicationMode;	//communication mode between the servers for election
     private int electionCounter;
     private syncObject sync;
 
@@ -63,8 +61,7 @@ public class IdServer implements IdServerInterface {
 
         this.serverUUID = UUID.randomUUID();
 
-		/*this.isCoordinator = false;
-		this.isCoordinatorElected = false;*/
+
         this.serverCommunicationMode = CommunicationMode.ELECTION_REQUIRED;
         this.electionCounter = 0;
 
@@ -74,6 +71,10 @@ public class IdServer implements IdServerInterface {
         sync.setLampTime(db.InitializeLamport());
     }
 
+    /**
+	   * Returns the sync object containing proper data
+	   * @return sync Object.
+	   */
     public syncObject getSync() {
         return sync;
     }
@@ -306,6 +307,11 @@ public class IdServer implements IdServerInterface {
         return ServerPort;
     }
 
+    /**
+	   * syncs servers using lamport time
+	   * @param referenceSync - the sync object.
+	   * @return nothing.
+	   */
     public void syncUsingLamportTime(syncObject referenceSync){
         for (int refLamportTime : referenceSync.getLampHistory().keySet()){
             if(!sync.getLampHistory().containsKey(refLamportTime)){
@@ -318,6 +324,10 @@ public class IdServer implements IdServerInterface {
         }
     }
 
+    /**
+	   * gets the coordinator stub for communication
+	   * @return IdServerInterface.
+	   */
     public IdServerInterface getCoordinatorStub(){
         IdServerInterface stub;
         try{
@@ -368,6 +378,10 @@ public class IdServer implements IdServerInterface {
         });
     }
 
+    /**
+	   * handles tasks before shutting down
+	   * @return nothing.
+	   */
     private void HandleShutDown() {
         if (db == null) {
             db = new Database(log);
@@ -400,6 +414,9 @@ public class IdServer implements IdServerInterface {
     }
 }
 
+/***
+ * Represents the CheckServersThread which repeatedly checks the status of other server
+ */
 class CheckServersThread implements Runnable {
     private int port;
     private MulticastSocket socket;
@@ -411,6 +428,13 @@ class CheckServersThread implements Runnable {
     private TimerTask timerTask = null;
     private LocalDateTime LastTimeCoordinatorResponded;
 
+    /***
+     * Creates an instance of the CheckServersThread
+     * @param port - the port of the server
+     * @param group - the group
+     * @param serverUUID - the server unique uuid
+     * @param idServer - the idserver instance
+     */
     CheckServersThread(int port, String group, UUID serverUUID, IdServer idServer) {
         this.port = port;
         try {
@@ -426,6 +450,10 @@ class CheckServersThread implements Runnable {
         this.LastTimeCoordinatorResponded = null;
     }
 
+    /**
+	   * initializes and creates the multicast connection
+	   * @return nothing.
+	   */
     private void createMulticastConenction() {
         try {
             socket = new MulticastSocket(port);
@@ -535,6 +563,10 @@ class CheckServersThread implements Runnable {
         }
     }
 
+    /**
+	   * returns the last time the backup servers got response from the coordinator
+	   * @return LocalDateTime.
+	   */
     public LocalDateTime GetLastCoordinatorMessageTime() {
         return this.LastTimeCoordinatorResponded;
     }
@@ -544,6 +576,9 @@ class CheckServersThread implements Runnable {
     }
 }
 
+/***
+ * Represents the SendStatusToOtherServersThread which repeatedly sends the status of the server to other servers
+ */
 class SendStatusToOtherServersThread implements Runnable {
     private int port;
     private MulticastSocket socket;
@@ -551,6 +586,13 @@ class SendStatusToOtherServersThread implements Runnable {
     private UUID serverUUID;
     private IdServer idServer;
 
+    /***
+     * Creates an instance of the SendStatusToOtherServersThread
+     * @param port - the port of the server
+     * @param group - the group
+     * @param serverUUID - the server unique uuid
+     * @param idServer - the idserver instance
+     */
     SendStatusToOtherServersThread(int port, String group, UUID serverUUID, IdServer idServer) {
         this.port = port;
         try {
@@ -565,6 +607,10 @@ class SendStatusToOtherServersThread implements Runnable {
         this.idServer = idServer;
     }
 
+    /**
+	   * initializes and creates the multicast connection
+	   * @return nothing.
+	   */
     private void createMulticastConenction() {
         try {
             socket = new MulticastSocket(port);
@@ -606,6 +652,9 @@ class SendStatusToOtherServersThread implements Runnable {
     }
 }
 
+/***
+ * Represents the ExecuteTimer which repeatedly checks whether the coordinator has stopped responding, and whether a certain amount of time is passed since the last time coordinator gave a response
+ */
 class ExecuteTimer extends TimerTask {
     CheckServersThread checkServersThread;
 

@@ -18,7 +18,7 @@ public class User implements Serializable {
     private String modificationMessage;
     // we will not pass this data during serialization so it's transient
     private transient String passHash; // Most probabably we will not need it will remove in future
-    private int lamport;
+    private int lamport;	//the lamport time for the particular change or update
 
     public User(){
 
