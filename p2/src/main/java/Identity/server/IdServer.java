@@ -51,6 +51,8 @@ public class IdServer implements IdServerInterface {
 
     public IdServer(String[] args) throws RemoteException {
         super();
+        System.setProperty("java.util.logging.SimpleFormatter.format",
+                "[%4$-7s] %5$s %n");
         log = Logger.getLogger(IdServer.class.getName());
 
         if (db == null) {
@@ -320,9 +322,11 @@ public class IdServer implements IdServerInterface {
         IdServerInterface stub;
         try{
             System.out.println("Coordinator address is: " + sync.getCoordinatorAddress() +" Port is : "+ sync.getCoordinatorPort());
-            Registry registry = LocateRegistry.getRegistry(sync.getCoordinatorAddress(), sync.getCoordinatorPort());
+            String[] coordinatoraddresswithHost = sync.getCoordinatorAddress().split("/");
+            Registry registry = LocateRegistry.getRegistry(coordinatoraddresswithHost[coordinatoraddresswithHost.length - 1], sync.getCoordinatorPort());
             stub = (IdServerInterface) registry.lookup("IdServer");
         } catch (Exception e){
+            e.printStackTrace();
             log.warning("Didn't find the coordinator");
             //So we will set the election is requied
             sync.unsetCoordinator(); // This will asign me as coordinator and automatically invoke a new election
@@ -459,13 +463,15 @@ class CheckServersThread implements Runnable {
                     //
                     idServer.getLog().info("ping received to execute election");
                     //doElection uuid
-                    if (this.idServer.getSync().getCoordinatorUUID() == null) {
+                    if (this.idServer.getSync().getCoordinatorAddress() == null || idServer.getSync().getLampTime() > receivedSyncObj.getLampTime()) {
                         // If there is no coordinator then I will set myself as coordinator
                         idServer.getSync().setMyselfasCoordinator();
-                    } else if (idServer.getSync().getMyUUID().toString().compareTo(receivedSyncObj.getCoordinatorUUID().toString()) <= 0) { // if coordinator is already save then I will compare my UUID with his UUID
-                        // Co ordinator is changed so I will change myself accordingly
+                    } else if(idServer.getSync().getLampTime() < receivedSyncObj.getLampTime()){
                         idServer.getSync().updateCoordinator(receivedSyncObj);
-                        idServer.getLog().info(idServer.getSync().getMessage());
+                    }else if (idServer.getSync().getCoordinatorUUID().toString().compareTo(receivedSyncObj.getCoordinatorUUID().toString()) <= 0) { // if lamport time is same  and if someone else has less UUID number then update myself and make him coordinator
+                        idServer.getSync().updateCoordinator(receivedSyncObj);
+                    }else if (idServer.getSync().getCoordinatorUUID().toString().compareTo(receivedSyncObj.getCoordinatorUUID().toString()) > 0) { // if lamport time is same  and if someone else has less UUID number then update myself and make him coordinator
+                        idServer.getSync().setMyselfasCoordinator();
                     }
                     idServer.getSync().setCommMode(CommunicationMode.ELECTION_RUNNING);
                     this.idServer.SetElectionCounter(0);
@@ -479,7 +485,7 @@ class CheckServersThread implements Runnable {
                     timer = new Timer();
                     timerTask = new ExecuteTimer(this);
                     timer.scheduleAtFixedRate(timerTask, 7000, 7000);
-                    if (idServer.getSync().getCoordinatorUUID() == null) { // IF my coordinator information is set to null then I will update myself
+                    if (idServer.getSync().getCoordinatorAddress() == null) { // IF my coordinator information is set to null then I will update myself
                         idServer.getLog().info("coord UUID being changed...1");
                         this.idServer.getSync().setCoordinatorUUID(receivedSyncObj.getCoordinatorUUID());
                     } else if(idServer.getSync().getLampTime() > receivedSyncObj.getLampTime()){ // I have the highest lamport time so I will be coordinator.
@@ -488,7 +494,10 @@ class CheckServersThread implements Runnable {
                         idServer.getSync().updateCoordinator(receivedSyncObj);
                     }else if (idServer.getSync().getCoordinatorUUID().toString().compareTo(receivedSyncObj.getCoordinatorUUID().toString()) <= 0) { // if lamport time is same  and if someone else has less UUID number then update myself and make him coordinator
                         idServer.getLog().info("coord UUID being changed...2");
-                        this.idServer.getSync().setCoordinatorUUID(receivedSyncObj.getCoordinatorUUID());
+                        this.idServer.getSync().updateCoordinator(receivedSyncObj);
+                    }else if (idServer.getSync().getCoordinatorUUID().toString().compareTo(receivedSyncObj.getCoordinatorUUID().toString()) > 0) { // if lamport time is same  and if someone else has less UUID number then update myself and make him coordinator
+                        idServer.getLog().info("coord UUID being changed...2");
+                        this.idServer.getSync().setMyselfasCoordinator();
                     }
                     this.idServer.SetElectionCounter(this.idServer.GetElectionCounter() + 1);
 
